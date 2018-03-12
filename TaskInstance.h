@@ -13,7 +13,7 @@ using namespace std;
 #define CV1_BOARD_H
 
 
-static const int EMPTY = 0;
+static const int EMPTY_SQUARE = 0;
 static const int BLACK_PEON = 1;
 static const int WHITE_PEON = 2;
 static const int QUEEN = 3;
@@ -25,6 +25,9 @@ public:
     int k; // rozměr šachovnice
     int h; // doporučená hodnota horní meze (akt_min)
 
+    int moves; // number of moves made by queen
+    int blacksCount; // sum of present black peons
+
     pair<int, int> queen;
 
     void readFromFile(const char *filename);
@@ -34,9 +37,9 @@ public:
     void printPossibleMoves(vector<pair<int, int>> moves);
 
     vector<pair<int, int>> getPossibleMoves();
+    vector<vector<int>> board;
 
 private:
-    vector<vector<int>> board;
 };
 
 
