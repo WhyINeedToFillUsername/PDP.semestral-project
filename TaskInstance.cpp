@@ -49,13 +49,13 @@ vector<pair<int, int>> TaskInstance::getPossibleMoves() {
     vector<pair<int, int>> possibleMoves = vector<pair<int, int>>();
 
     // go left
-    for (int i = queen.first - 1; i >= 0; i--) {
-        int itemAtNewPosition = board[i][queen.second];
+    for (int x = queen.first - 1; x >= 0; x--) {
+        int itemAtNewPosition = board[x][queen.second];
 
         if (itemAtNewPosition == EMPTY) {
-            possibleMoves.emplace_back(i, queen.second);
+            possibleMoves.emplace_back(x, queen.second);
         } else if (itemAtNewPosition == BLACK_PEON) {
-            possibleMoves.emplace_back(i, queen.second);
+            possibleMoves.emplace_back(x, queen.second);
             break;
         } else {
             break;
@@ -63,13 +63,13 @@ vector<pair<int, int>> TaskInstance::getPossibleMoves() {
     }
 
     // go right
-    for (int i = queen.first + 1; i < k; i++) {
-        int itemAtNewPosition = board[i][queen.second];
+    for (int x = queen.first + 1; x < k; x++) {
+        int itemAtNewPosition = board[x][queen.second];
 
         if (itemAtNewPosition == EMPTY) {
-            possibleMoves.emplace_back(i, queen.second);
+            possibleMoves.emplace_back(x, queen.second);
         } else if (itemAtNewPosition == BLACK_PEON) {
-            possibleMoves.emplace_back(i, queen.second);
+            possibleMoves.emplace_back(x, queen.second);
             break;
         } else {
             break;
@@ -77,13 +77,13 @@ vector<pair<int, int>> TaskInstance::getPossibleMoves() {
     }
 
     // go up
-    for (int i = queen.second - 1; i >= 0; i--) {
-        int itemAtNewPosition = board[queen.first][i];
+    for (int y = queen.second - 1; y >= 0; y--) {
+        int itemAtNewPosition = board[queen.first][y];
 
         if (itemAtNewPosition == EMPTY) {
-            possibleMoves.emplace_back(queen.first, i);
+            possibleMoves.emplace_back(queen.first, y);
         } else if (itemAtNewPosition == BLACK_PEON) {
-            possibleMoves.emplace_back(queen.first, i);
+            possibleMoves.emplace_back(queen.first, y);
             break;
         } else {
             break;
@@ -91,13 +91,13 @@ vector<pair<int, int>> TaskInstance::getPossibleMoves() {
     }
 
     // go down
-    for (int i = queen.second + 1; i < k; i++) {
-        int itemAtNewPosition = board[queen.first][i];
+    for (int y = queen.second + 1; y < k; y++) {
+        int itemAtNewPosition = board[queen.first][y];
 
         if (itemAtNewPosition == EMPTY) {
-            possibleMoves.emplace_back(queen.first, i);
+            possibleMoves.emplace_back(queen.first, y);
         } else if (itemAtNewPosition == BLACK_PEON) {
-            possibleMoves.emplace_back(queen.first, i);
+            possibleMoves.emplace_back(queen.first, y);
             break;
         } else {
             break;
@@ -105,60 +105,85 @@ vector<pair<int, int>> TaskInstance::getPossibleMoves() {
     }
 
     // go up the top-left diagonal
-//    for (int i = queen.first - 1; i >= 0; i--) {
-//        int itemAtNewPosition = board[i][queen.second];
-//
-//        if (itemAtNewPosition == EMPTY) {
-//            possibleMoves.emplace_back(i, queen.second);
-//        } else if (itemAtNewPosition == BLACK_PEON) {
-//            possibleMoves.emplace_back(i, queen.second);
-//            break;
-//        } else {
-//            break;
-//        }
-//    }
+    {
+        int x = queen.first - 1;
+        int y = queen.second - 1;
+
+        while (x >= 0 && y >= 0) {
+            int itemAtNewPosition = board[x][y];
+            if (itemAtNewPosition == EMPTY) {
+                possibleMoves.emplace_back(x, y);
+            } else if (itemAtNewPosition == BLACK_PEON) {
+                possibleMoves.emplace_back(x, y);
+                break;
+            } else {
+                break;
+            }
+            x--;
+            y--;
+        }
+    }
+
 
     // go down the top-left diagonal
-//    for (int i = queen.first + 1; i < k; i++) {
-//        int itemAtNewPosition = board[i][queen.second];
-//
-//        if (itemAtNewPosition == EMPTY) {
-//            possibleMoves.emplace_back(i, queen.second);
-//        } else if (itemAtNewPosition == BLACK_PEON) {
-//            possibleMoves.emplace_back(i, queen.second);
-//            break;
-//        } else {
-//            break;
-//        }
-//    }
+    {
+        int x = queen.first + 1;
+        int y = queen.second + 1;
 
-    // go up the top-right diagonal
-//    for (int i = queen.second - 1; i >= 0; i--) {
-//        int itemAtNewPosition = board[queen.first][i];
-//
-//        if (itemAtNewPosition == EMPTY) {
-//            possibleMoves.emplace_back(queen.first, i);
-//        } else if (itemAtNewPosition == BLACK_PEON) {
-//            possibleMoves.emplace_back(queen.first, i);
-//            break;
-//        } else {
-//            break;
-//        }
-//    }
+        while (x < k && y < k) {
+            int itemAtNewPosition = board[x][y];
+            if (itemAtNewPosition == EMPTY) {
+                possibleMoves.emplace_back(x, y);
+            } else if (itemAtNewPosition == BLACK_PEON) {
+                possibleMoves.emplace_back(x, y);
+                break;
+            } else {
+                break;
+            }
+            x++;
+            y++;
+        }
+    }
 
     // go down the top-right diagonal
-//    for (int i = queen.second + 1; i < k; i++) {
-//        int itemAtNewPosition = board[queen.first][i];
-//
-//        if (itemAtNewPosition == EMPTY) {
-//            possibleMoves.emplace_back(queen.first, i);
-//        } else if (itemAtNewPosition == BLACK_PEON) {
-//            possibleMoves.emplace_back(queen.first, i);
-//            break;
-//        } else {
-//            break;
-//        }
-//    }
+    {
+        int x = queen.first - 1;
+        int y = queen.second + 1;
+
+        while (x >= 0 && y >= 0) {
+            int itemAtNewPosition = board[x][y];
+            if (itemAtNewPosition == EMPTY) {
+                possibleMoves.emplace_back(x, y);
+            } else if (itemAtNewPosition == BLACK_PEON) {
+                possibleMoves.emplace_back(x, y);
+                break;
+            } else {
+                break;
+            }
+            x--;
+            y++;
+        }
+    }
+
+    // go up the top-right diagonal
+    {
+        int x = queen.first + 1;
+        int y = queen.second - 1;
+
+        while (x >= 0 && y >= 0) {
+            int itemAtNewPosition = board[x][y];
+            if (itemAtNewPosition == EMPTY) {
+                possibleMoves.emplace_back(x, y);
+            } else if (itemAtNewPosition == BLACK_PEON) {
+                possibleMoves.emplace_back(x, y);
+                break;
+            } else {
+                break;
+            }
+            x++;
+            y--;
+        }
+    }
 
     return possibleMoves;
 }
