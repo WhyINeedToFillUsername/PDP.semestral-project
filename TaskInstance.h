@@ -21,25 +21,22 @@ static const int QUEEN = 3;
 class TaskInstance {
 public:
     TaskInstance();
+    TaskInstance(const TaskInstance &old);
 
     int k; // rozměr šachovnice
     int h; // doporučená hodnota horní meze (akt_min)
 
-    int moves; // number of moves made by queen
+    int movesCount; // number of moves made by queen
     int blacksCount; // sum of present black peons
 
-    pair<int, int> queen;
+    pair<int, int> queenPosition;
+    vector<vector<int>> board;
 
     void readFromFile(const char *filename);
+    vector<pair<int, int>> getPossibleMoves();
 
     void printInfo();
     void printBoard();
-    void printPossibleMoves(vector<pair<int, int>> moves);
-
-    vector<pair<int, int>> getPossibleMoves();
-    vector<vector<int>> board;
-
-private:
 };
 
 
