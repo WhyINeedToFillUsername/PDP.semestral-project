@@ -1,10 +1,10 @@
 #include <iostream>
 #include "TaskInstance.h"
 
-static const char *const filename = R"(c:\Users\akarola\Dropbox\School\FIT LS 2018\PDP\Semestralka\pdp_kralovna\kralovna01.txt)";
+static const char *const filename = R"(c:\Users\akarola\Dropbox\School\FIT LS 2018\PDP\Semestralka\pdp_kralovna\kralovna04.txt)";
 using namespace std;
 
-void recursion(TaskInstance task, pair<int, int> queenPosition, vector<pair<int, int>> moves);
+void recursion(TaskInstance task, pair<int, int> queenNewPosition, vector<pair<int, int>> moves);
 
 void printMoves(vector<pair<int, int>> moves);
 
@@ -38,12 +38,17 @@ int main(int argc, char **argv) {
     return 0;
 }
 
-void recursion(TaskInstance task, pair<int, int> queenPosition, vector<pair<int, int>> moves) {
+void recursion(TaskInstance task, pair<int, int> queenNewPosition, vector<pair<int, int>> moves) {
     task.movesCount++;
-    moves.push_back(queenPosition);
 
-    if (task.board[queenPosition.first][queenPosition.second] == BLACK_PEON) {
-        task.board[queenPosition.first][queenPosition.second] = EMPTY_SQUARE;
+    // remove the queen's old position from the board
+    task.board[task.queenPosition.first][task.queenPosition.second] = EMPTY_SQUARE;
+    task.queenPosition = queenNewPosition;
+
+    moves.push_back(queenNewPosition); // record the queen movement
+
+    if (task.board[queenNewPosition.first][queenNewPosition.second] == BLACK_PEON) {
+//        task.board[queenNewPosition.first][queenNewPosition.second] = EMPTY_SQUARE;
         task.blacksCount--;
 
         if (task.blacksCount <= 0) {
@@ -58,6 +63,9 @@ void recursion(TaskInstance task, pair<int, int> queenPosition, vector<pair<int,
 
     // this can't be better than our best solution, don't continue
     if (task.movesCount + task.blacksCount >= bestSolution) return;
+
+    // put the queen's new position on the board
+    task.board[queenNewPosition.first][queenNewPosition.second] = QUEEN;
 
     for (auto &newPosition : task.getPossibleMoves()) {
         recursion(task, newPosition, moves);

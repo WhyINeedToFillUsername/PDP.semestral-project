@@ -37,6 +37,9 @@ public:
 
     void printTaskInfo();
     void printBoard();
+
+private:
+    bool shouldMoveFurther(int x, int y, vector<pair<int, int>> &possibleMoves);
 };
 
 
