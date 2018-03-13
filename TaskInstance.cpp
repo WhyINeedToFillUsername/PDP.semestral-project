@@ -22,11 +22,12 @@ TaskInstance::TaskInstance(const TaskInstance &old) {
     board = old.board;
 }
 
-void TaskInstance::printInfo() {
+void TaskInstance::printTaskInfo() {
     std::cout << "k: " << k << ", h: " << h << std::endl;
     std::cout << "queen position: " << queenPosition.first << ", " << queenPosition.second << std::endl;
     std::cout << "# of black peons: " << blacksCount << std::endl;
     std::cout << "# of moves: " << movesCount << std::endl;
+    printBoard();
 }
 
 void TaskInstance::printBoard() {

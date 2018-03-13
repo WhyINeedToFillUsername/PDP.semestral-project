@@ -8,17 +8,16 @@ void recursion(TaskInstance task, pair<int, int> queenPosition, vector<pair<int,
 
 void printMoves(vector<pair<int, int>> moves);
 
-int bestSolution = INT_MAX;
+int bestSolution;
 vector<pair<int, int>> madeMoves;
 
 int main(int argc, char **argv) {
     TaskInstance task;
-//    task = new TaskInstance;
     task.readFromFile(filename);
-    task.printInfo();
-    task.printBoard();
+    task.printTaskInfo();
 
-    // zjisti všechny možné tahy
+    bestSolution = task.h; // set upper bound (h from file input)
+
     vector<pair<int, int>> possibleMoves = task.getPossibleMoves();
     printMoves(possibleMoves);
     cout << endl;
@@ -27,12 +26,12 @@ int main(int argc, char **argv) {
     moves.push_back(task.queenPosition);
 
     // for every move call:
-    for (auto &&newPosition : possibleMoves) {
+    for (auto &newPosition : possibleMoves) {
+//        cout << "newPosition: " << "(" << newPosition.first << "," << newPosition.second << ")" << endl;
         recursion(task, newPosition, moves);
     }
 
-    cout << endl;
-    cout << "bestSolution " << bestSolution << endl;
+    cout << endl << "bestSolution: " << bestSolution << endl;
 
     printMoves(madeMoves);
 
@@ -40,13 +39,6 @@ int main(int argc, char **argv) {
 }
 
 void recursion(TaskInstance task, pair<int, int> queenPosition, vector<pair<int, int>> moves) {
-//    task.printInfo();
-//    task.printBoard();
-//    cout << endl;
-
-    // rekurzivně zavolej to nad sebou, dokud nezbydou žádné černé figurky
-    // zjisti všechny možné tahy
-
     task.movesCount++;
     moves.push_back(queenPosition);
 
@@ -56,22 +48,26 @@ void recursion(TaskInstance task, pair<int, int> queenPosition, vector<pair<int,
 
         if (task.blacksCount <= 0) {
             // We've eliminated all the black peons. Is this the best solution?
-            if (task.movesCount < bestSolution) bestSolution = task.movesCount;
-            madeMoves = moves;
+            if (task.movesCount < bestSolution) {
+                bestSolution = task.movesCount;
+                madeMoves = moves;
+            }
             return;
         }
     }
 
-    if (task.movesCount >= bestSolution) return; // this will be worse then our best solution, don't continue
-    for (auto &&newPosition : task.getPossibleMoves()) {
+    // this can't be better than our best solution, don't continue
+    if (task.movesCount + task.blacksCount >= bestSolution) return;
+
+    for (auto &newPosition : task.getPossibleMoves()) {
         recursion(task, newPosition, moves);
     }
 }
 
 void printMoves(vector<pair<int, int>> moves) {
     cout << "queen moves: ";
-    for (auto &&item : moves) {
-        cout << "(" << item.first << "," << item.second << "); ";
+    for (auto &move : moves) {
+        cout << "(" << move.first << "," << move.second << "); ";
     }
     cout << endl;
 }

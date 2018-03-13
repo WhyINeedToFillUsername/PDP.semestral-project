@@ -35,7 +35,7 @@ public:
     void readFromFile(const char *filename);
     vector<pair<int, int>> getPossibleMoves();
 
-    void printInfo();
+    void printTaskInfo();
     void printBoard();
 };
 
