@@ -1,7 +1,6 @@
 #include <iostream>
 #include "TaskInstance.h"
 
-static const char *const filename = R"(c:\Users\akarola\Dropbox\School\FIT LS 2018\PDP\Semestralka\pdp_kralovna\kralovna04.txt)";
 using namespace std;
 
 void recursion(TaskInstance task, pair<int, int> queenNewPosition, vector<pair<int, int>> moves);
@@ -12,8 +11,11 @@ int bestSolution;
 vector<pair<int, int>> madeMoves;
 
 int main(int argc, char **argv) {
+    const string filename = argv[1];
+    cout << filename << endl;
+
     TaskInstance task;
-    task.readFromFile(filename);
+    task.readFromFile("./input/" + filename);
     task.printTaskInfo();
 
     bestSolution = task.h; // set upper bound (h from file input)
@@ -43,7 +45,8 @@ void recursion(TaskInstance task, pair<int, int> queenNewPosition, vector<pair<i
 
     // remove the queen's old position from the board
     task.board[task.queenPosition.first][task.queenPosition.second] = EMPTY_SQUARE;
-    task.queenPosition = queenNewPosition;
+    task.queenPosition.first = queenNewPosition.first;
+    task.queenPosition.second = queenNewPosition.second;
 
     moves.push_back(queenNewPosition); // record the queen movement
 
@@ -67,7 +70,10 @@ void recursion(TaskInstance task, pair<int, int> queenNewPosition, vector<pair<i
     // put the queen's new position on the board
     task.board[queenNewPosition.first][queenNewPosition.second] = QUEEN;
 
-    for (auto &newPosition : task.getPossibleMoves()) {
+    task.printTaskInfo();
+    vector<pair<int, int>> possibleMoves = task.getPossibleMoves();
+    printMoves(possibleMoves);
+    for (auto &newPosition : possibleMoves) {
         recursion(task, newPosition, moves);
     }
 }

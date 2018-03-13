@@ -40,7 +40,7 @@ void TaskInstance::printBoard() {
     }
 }
 
-void TaskInstance::readFromFile(const char *filename) {
+void TaskInstance::readFromFile(const string &filename) {
     std::ifstream input(filename);
 
     input >> k >> h;
@@ -152,6 +152,7 @@ vector<pair<int, int>> TaskInstance::getPossibleMoves() {
 }
 
 bool TaskInstance::shouldMoveFurther(int x, int y, vector<pair<int, int>> &possibleMoves) {
+    if (x < 0 || y < 0 || x >= k || y >= k) return false;
     int itemAtNewPosition = board[x][y];
 
     if (itemAtNewPosition == EMPTY_SQUARE) {

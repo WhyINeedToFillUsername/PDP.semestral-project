@@ -32,7 +32,7 @@ public:
     pair<int, int> queenPosition;
     vector<vector<int>> board;
 
-    void readFromFile(const char *filename);
+    void readFromFile(const string &filename);
     vector<pair<int, int>> getPossibleMoves();
 
     void printTaskInfo();
