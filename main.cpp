@@ -3,12 +3,12 @@
 
 using namespace std;
 
-void recursion(TaskInstance task, pair<int, int> queenNewPosition, vector<pair<int, int>> moves);
+void recursion(TaskInstance task, pair<short, short> queenNewPosition, vector<pair<short, short>> moves);
 
-void printMoves(vector<pair<int, int>> moves);
+void printMoves(vector<pair<short, short>> moves);
 
-int bestSolution;
-vector<pair<int, int>> madeMoves;
+short bestSolution;
+vector<pair<short, short>> madeMoves;
 
 int main(int argc, char **argv) {
     const string filename = argv[1];
@@ -20,11 +20,11 @@ int main(int argc, char **argv) {
 
     bestSolution = task.h; // set upper bound (h from file input)
 
-    vector<pair<int, int>> possibleMoves = task.getPossibleMoves();
+    vector<pair<short, short>> possibleMoves = task.getPossibleMoves();
     printMoves(possibleMoves);
     cout << endl;
 
-    vector<pair<int, int>> moves = vector<pair<int, int>>();
+    vector<pair<short, short>> moves = vector<pair<short, short>>();
     moves.push_back(task.queenPosition);
 
     // for every move call:
@@ -40,13 +40,8 @@ int main(int argc, char **argv) {
     return 0;
 }
 
-void recursion(TaskInstance task, pair<int, int> queenNewPosition, vector<pair<int, int>> moves) {
+void recursion(TaskInstance task, pair<short, short> queenNewPosition, vector<pair<short, short>> moves) {
     task.movesCount++;
-
-    // remove the queen's old position from the board
-    task.board[task.queenPosition.first][task.queenPosition.second] = EMPTY_SQUARE;
-    task.queenPosition.first = queenNewPosition.first;
-    task.queenPosition.second = queenNewPosition.second;
 
     moves.push_back(queenNewPosition); // record the queen movement
 
@@ -67,18 +62,21 @@ void recursion(TaskInstance task, pair<int, int> queenNewPosition, vector<pair<i
     // this can't be better than our best solution, don't continue
     if (task.movesCount + task.blacksCount >= bestSolution) return;
 
-    // put the queen's new position on the board
+    // update the queen's position ontthe board
+    task.board[task.queenPosition.first][task.queenPosition.second] = EMPTY_SQUARE;
+    task.queenPosition.first = queenNewPosition.first;
+    task.queenPosition.second = queenNewPosition.second;
     task.board[queenNewPosition.first][queenNewPosition.second] = QUEEN;
 
-    task.printTaskInfo();
-    vector<pair<int, int>> possibleMoves = task.getPossibleMoves();
-    printMoves(possibleMoves);
+//    task.printTaskInfo();
+    vector<pair<short, short>> possibleMoves = task.getPossibleMoves();
+//    printMoves(possibleMoves);
     for (auto &newPosition : possibleMoves) {
         recursion(task, newPosition, moves);
     }
 }
 
-void printMoves(vector<pair<int, int>> moves) {
+void printMoves(vector<pair<short, short>> moves) {
     cout << "queen moves: ";
     for (auto &move : moves) {
         cout << "(" << move.first << "," << move.second << "); ";

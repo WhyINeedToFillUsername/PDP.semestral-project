@@ -13,33 +13,33 @@ using namespace std;
 #define CV1_BOARD_H
 
 
-static const int EMPTY_SQUARE = 0;
-static const int BLACK_PEON = 1;
-static const int WHITE_PEON = 2;
-static const int QUEEN = 3;
+static const short EMPTY_SQUARE = 0;
+static const short BLACK_PEON = 1;
+static const short WHITE_PEON = 2;
+static const short QUEEN = 3;
 
 class TaskInstance {
 public:
     TaskInstance();
     TaskInstance(const TaskInstance &old);
 
-    int k; // rozměr šachovnice
-    int h; // doporučená hodnota horní meze (akt_min)
+    short k; // rozměr šachovnice
+    short h; // doporučená hodnota horní meze (akt_min)
 
-    int movesCount; // number of moves made by queen
-    int blacksCount; // sum of present black peons
+    short movesCount; // number of moves made by queen
+    short blacksCount; // sum of present black peons
 
-    pair<int, int> queenPosition;
-    vector<vector<int>> board;
+    pair<short, short> queenPosition;
+    vector<vector<short>> board;
 
     void readFromFile(const string &filename);
-    vector<pair<int, int>> getPossibleMoves();
+    vector<pair<short, short>> getPossibleMoves();
 
     void printTaskInfo();
     void printBoard();
 
 private:
-    bool shouldMoveFurther(int x, int y, vector<pair<int, int>> &possibleMoves);
+    bool shouldMoveFurther(short x, short y, vector<pair<short, short>> &possibleMoves);
 };
 
 
