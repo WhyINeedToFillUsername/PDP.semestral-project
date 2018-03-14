@@ -10,6 +10,7 @@ void printMoves(vector<pair<short, short>> moves);
 short bestSolution;
 vector<pair<short, short>> madeMoves;
 
+// compile with "g++ -O3 -fopenmp main.cpp TaskInstance.cpp TaskInstance.h -o cv1.exe"
 int main(int argc, char **argv) {
     const string filename = argv[1];
     cout << filename << endl;
@@ -27,11 +28,12 @@ int main(int argc, char **argv) {
     vector<pair<short, short>> moves = vector<pair<short, short>>();
     moves.push_back(task.queenPosition);
 
-    // for every move call:
-    for (auto &newPosition : possibleMoves) {
-//        cout << "newPosition: " << "(" << newPosition.first << "," << newPosition.second << ")" << endl;
-        recursion(task, newPosition, moves);
-    }
+	# pragma omp parallel
+	# pragma omp single
+	for (auto &newPosition : possibleMoves) {
+			#pragma omp task
+			recursion(task, newPosition, moves);
+	}
 
     cout << endl << "bestSolution: " << bestSolution << endl;
 
@@ -72,6 +74,7 @@ void recursion(TaskInstance task, pair<short, short> queenNewPosition, vector<pa
     vector<pair<short, short>> possibleMoves = task.getPossibleMoves();
 //    printMoves(possibleMoves);
     for (auto &newPosition : possibleMoves) {
+		#pragma omp task
         recursion(task, newPosition, moves);
     }
 }
