@@ -23,23 +23,22 @@ public:
     TaskInstance();
     TaskInstance(const TaskInstance &old);
 
-    short k; // rozměr šachovnice
-    short h; // doporučená hodnota horní meze (akt_min)
-
     short movesCount; // number of moves made by queen
     short blacksCount; // sum of present black peons
 
     pair<short, short> queenPosition;
     vector<vector<short>> board;
+//    short** board;
 
-    void readFromFile(const string &filename);
-    vector<pair<short, short>> getPossibleMoves();
+    void readFromFile(const string &filename, short &k, short &h);
+    vector<pair<short, short>> getPossibleMoves(short const &k);
 
-    void printTaskInfo();
-    void printBoard();
+    void printTaskInfo(short &k, short &h);
+    void printBoard(short &k);
 
 private:
-    bool shouldMoveFurther(short x, short y, vector<pair<short, short>> &possibleMoves);
+    bool shouldMoveFurther(short const &x, short const &y, vector<pair<short, short>> &possibleMoves,
+                               short const &k);
 };
 
 
