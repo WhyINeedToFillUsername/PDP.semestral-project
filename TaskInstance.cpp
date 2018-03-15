@@ -20,7 +20,7 @@ TaskInstance::TaskInstance(const TaskInstance &old) {
 
     queenPosition.first = old.queenPosition.first;
     queenPosition.second = old.queenPosition.second;
-    board = old.board;
+    memcpy(board, old.board, sizeof (char) * ARR_INIT_SIZE * ARR_INIT_SIZE);
 }
 
 void TaskInstance::printTaskInfo(short &k, short &h) {
@@ -50,18 +50,16 @@ void TaskInstance::readFromFile(const string &filename, short &k, short &h) {
 
     for (short i = 0; i < k; i++) {
         getline(input, line);
-        vector<short> row;
         for (short j = 0; j < k; j++) {
-            short figure = line.at(j) - '0';
+            char figure = line.at(j);
             if (figure == QUEEN) {
                 this->queenPosition = make_pair(i, j);
             } else if (figure == BLACK_PEON) {
                 this->blacksCount++;
             }
-            row.push_back(figure);
+            board[i][j] = figure;
 //            cout << line.at(j);
         }
-        this->board.push_back(row);
 //        cout << std::endl;
     }
 //    cout << std::endl;
@@ -153,7 +151,7 @@ vector<pair<short, short>> TaskInstance::getPossibleMoves(short const &k) {
 }
 
 bool TaskInstance::shouldMoveFurther(short const &x, short const &y, vector<pair<short, short>> &possibleMoves) {
-    const short itemAtNewPosition = board[x][y];
+    const char itemAtNewPosition = board[x][y];
 
     if (itemAtNewPosition == EMPTY_SQUARE) {
         possibleMoves.emplace_back(x, y);

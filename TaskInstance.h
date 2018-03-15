@@ -6,6 +6,7 @@
 #include <vector>
 #include <string>
 #include <fstream>
+#include <cstring>
 
 using namespace std;
 
@@ -13,10 +14,13 @@ using namespace std;
 #define CV1_BOARD_H
 
 
-static const short EMPTY_SQUARE = 0;
-static const short BLACK_PEON = 1;
-static const short WHITE_PEON = 2;
-static const short QUEEN = 3;
+static const short ARR_INIT_SIZE = 10;
+
+static const char EMPTY_SQUARE = '0';
+static const char BLACK_PEON = '1';
+static const char WHITE_PEON = '2';
+static const char QUEEN = '3';
+
 
 class TaskInstance {
 public:
@@ -27,8 +31,7 @@ public:
     short blacksCount; // sum of present black peons
 
     pair<short, short> queenPosition;
-    vector<vector<short>> board;
-//    short** board;
+    char board[ARR_INIT_SIZE][ARR_INIT_SIZE];
 
     void readFromFile(const string &filename, short &k, short &h);
     vector<pair<short, short>> getPossibleMoves(short const &k);
