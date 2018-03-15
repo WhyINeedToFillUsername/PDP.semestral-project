@@ -5,7 +5,7 @@ using namespace std;
 
 void recursion(TaskInstance task, pair<short, short> queenNewPosition, vector<pair<short, short>> moves);
 
-void printMoves(vector<pair<short, short>> moves);
+void printMoves(vector<pair<short, short>> &moves);
 
 short k; // rozměr šachovnice
 short h; // doporučená hodnota horní meze (akt_min)
@@ -49,8 +49,13 @@ void recursion(TaskInstance task, pair<short, short> queenNewPosition, vector<pa
         if (task.blacksCount <= 0) {
             // We've eliminated all the black peons. Is this the best solution?
             if (task.movesCount < bestSolution) {
-                bestSolution = task.movesCount;
-                madeMoves = moves;
+                #pragma omp critical
+                {
+                    if (task.movesCount < bestSolution) {
+                        bestSolution = task.movesCount;
+                        madeMoves = moves;
+                    }
+                };
             }
             return;
         }
@@ -71,7 +76,7 @@ void recursion(TaskInstance task, pair<short, short> queenNewPosition, vector<pa
     }
 }
 
-void printMoves(vector<pair<short, short>> moves) {
+void printMoves(vector<pair<short, short>> &moves) {
     cout << "queen moves: ";
     for (auto &move : moves) {
         cout << "(" << move.first << "," << move.second << "); ";

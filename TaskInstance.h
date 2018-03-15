@@ -37,8 +37,7 @@ public:
     void printBoard(short &k);
 
 private:
-    bool shouldMoveFurther(short const &x, short const &y, vector<pair<short, short>> &possibleMoves,
-                               short const &k);
+    bool shouldMoveFurther(short const &x, short const &y, vector<pair<short, short>> &possibleMoves);
 };
 
 

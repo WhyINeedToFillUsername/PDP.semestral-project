@@ -78,22 +78,22 @@ vector<pair<short, short>> TaskInstance::getPossibleMoves(short const &k) {
 
     // go left
     for (short x = queenPosition.first - 1; x >= 0; x--) {
-        if (!shouldMoveFurther(x, queenPosition.second, possibleMoves, k)) break;
+        if (!shouldMoveFurther(x, queenPosition.second, possibleMoves)) break;
     }
 
     // go right
     for (short x = queenPosition.first + 1; x < k; x++) {
-        if (!shouldMoveFurther(x, queenPosition.second, possibleMoves, k)) break;
+        if (!shouldMoveFurther(x, queenPosition.second, possibleMoves)) break;
     }
 
     // go up
     for (short y = queenPosition.second - 1; y >= 0; y--) {
-        if (!shouldMoveFurther(queenPosition.first, y, possibleMoves, k)) break;
+        if (!shouldMoveFurther(queenPosition.first, y, possibleMoves)) break;
     }
 
     // go down
     for (short y = queenPosition.second + 1; y < k; y++) {
-        if (!shouldMoveFurther(queenPosition.first, y, possibleMoves, k)) break;
+        if (!shouldMoveFurther(queenPosition.first, y, possibleMoves)) break;
     }
 
     // go up the top-left diagonal
@@ -102,7 +102,7 @@ vector<pair<short, short>> TaskInstance::getPossibleMoves(short const &k) {
         short y = queenPosition.second - 1;
 
         while (x >= 0 && y >= 0) {
-            if (!shouldMoveFurther(x, y, possibleMoves, k)) break;
+            if (!shouldMoveFurther(x, y, possibleMoves)) break;
 
             x--;
             y--;
@@ -116,7 +116,7 @@ vector<pair<short, short>> TaskInstance::getPossibleMoves(short const &k) {
         short y = queenPosition.second + 1;
 
         while (x < k && y < k) {
-            if (!shouldMoveFurther(x, y, possibleMoves, k)) break;
+            if (!shouldMoveFurther(x, y, possibleMoves)) break;
 
             x++;
             y++;
@@ -128,8 +128,8 @@ vector<pair<short, short>> TaskInstance::getPossibleMoves(short const &k) {
         short x = queenPosition.first - 1;
         short y = queenPosition.second + 1;
 
-        while (x >= 0 && y >= 0) {
-            if (!shouldMoveFurther(x, y, possibleMoves, k)) break;
+        while (x >= 0 && y < k) {
+            if (!shouldMoveFurther(x, y, possibleMoves)) break;
 
             x--;
             y++;
@@ -141,8 +141,8 @@ vector<pair<short, short>> TaskInstance::getPossibleMoves(short const &k) {
         short x = queenPosition.first + 1;
         short y = queenPosition.second - 1;
 
-        while (x >= 0 && y >= 0) {
-            if (!shouldMoveFurther(x, y, possibleMoves, k)) break;
+        while (x < k && y >= 0) {
+            if (!shouldMoveFurther(x, y, possibleMoves)) break;
 
             x++;
             y--;
@@ -152,9 +152,7 @@ vector<pair<short, short>> TaskInstance::getPossibleMoves(short const &k) {
     return possibleMoves;
 }
 
-bool TaskInstance::shouldMoveFurther(short const &x, short const &y, vector<pair<short, short>> &possibleMoves,
-                                     short const &k) {
-    if (x < 0 || y < 0 || x >= k || y >= k) return false;
+bool TaskInstance::shouldMoveFurther(short const &x, short const &y, vector<pair<short, short>> &possibleMoves) {
     const short itemAtNewPosition = board[x][y];
 
     if (itemAtNewPosition == EMPTY_SQUARE) {
