@@ -25,17 +25,10 @@ int main(int argc, char **argv) {
     printMoves(possibleMoves);
     cout << endl;
 
-    vector<pair<short, short>> moves = vector<pair<short, short>>();
-    moves.push_back(task.queenPosition);
+    recursion(task, task.queenPosition, vector<pair<short, short>>());
 
-	# pragma omp parallel
-	# pragma omp single
-	for (auto &newPosition : possibleMoves) {
-			#pragma omp task
-			recursion(task, newPosition, moves);
-	}
-
-    cout << endl << "bestSolution: " << bestSolution << endl;
+    // -1 for the first queen position
+    cout << endl << "bestSolution: " << (bestSolution - 1) << endl;
 
     printMoves(madeMoves);
 
@@ -44,11 +37,9 @@ int main(int argc, char **argv) {
 
 void recursion(TaskInstance task, pair<short, short> queenNewPosition, vector<pair<short, short>> moves) {
     task.movesCount++;
-
     moves.push_back(queenNewPosition); // record the queen movement
 
     if (task.board[queenNewPosition.first][queenNewPosition.second] == BLACK_PEON) {
-//        task.board[queenNewPosition.first][queenNewPosition.second] = EMPTY_SQUARE;
         task.blacksCount--;
 
         if (task.blacksCount <= 0) {
@@ -70,11 +61,7 @@ void recursion(TaskInstance task, pair<short, short> queenNewPosition, vector<pa
     task.queenPosition.second = queenNewPosition.second;
     task.board[queenNewPosition.first][queenNewPosition.second] = QUEEN;
 
-//    task.printTaskInfo();
-    vector<pair<short, short>> possibleMoves = task.getPossibleMoves();
-//    printMoves(possibleMoves);
-    for (auto &newPosition : possibleMoves) {
-		#pragma omp task
+    for (auto &newPosition : task.getPossibleMoves()) {
         recursion(task, newPosition, moves);
     }
 }
