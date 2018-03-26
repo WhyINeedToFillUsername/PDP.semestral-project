@@ -6,9 +6,6 @@
 TaskInstance::TaskInstance() {
     movesCount = 0;
     blacksCount = 0;
-//    board = new short*[];
-//    auto * boardRow = new short[];
-//    board[0] = boardRow;
 }
 
 // copy constructor
@@ -53,7 +50,8 @@ void TaskInstance::readFromFile(const string &filename, short &k, short &h) {
         for (short j = 0; j < k; j++) {
             char figure = line.at(j);
             if (figure == QUEEN) {
-                this->queenPosition = make_pair(i, j);
+                this->queenPosition.first = i;
+                this->queenPosition.second = j;
             } else if (figure == BLACK_PEON) {
                 this->blacksCount++;
             }

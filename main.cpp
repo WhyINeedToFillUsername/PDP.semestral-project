@@ -3,12 +3,14 @@
 
 using namespace std;
 
-void recursion(TaskInstance task, pair<short, short> queenNewPosition, vector<pair<short, short>> moves);
+const short THRESHOLD = 5;
+
+void recursion(TaskInstance task, pair<short, short> queenNewPosition, vector<pair<short, short>> moves, int treeLevel);
 
 void printMoves(vector<pair<short, short>> &moves);
 
-short k; // rozměr šachovnice
-short h; // doporučená hodnota horní meze (akt_min)
+short k; // chessboard size
+short h; // recommended value of the upper bound (akt_min)
 short bestSolution;
 vector<pair<short, short>> madeMoves;
 
@@ -29,7 +31,7 @@ int main(int argc, char **argv) {
 
     # pragma omp parallel
     # pragma omp single
-    recursion(task, task.queenPosition, vector<pair<short, short>>());
+    recursion(task, task.queenPosition, vector<pair<short, short>>(), 1);
 
     // -1 for the first queen position
     cout << endl << "bestSolution: " << (bestSolution - 1) << endl;
@@ -39,7 +41,7 @@ int main(int argc, char **argv) {
     return 0;
 }
 
-void recursion(TaskInstance task, pair<short, short> queenNewPosition, vector<pair<short, short>> moves) {
+void recursion(TaskInstance task, pair<short, short> queenNewPosition, vector<pair<short, short>> moves, int treeLevel) {
     task.movesCount++;
     moves.push_back(queenNewPosition); // record the queen movement
 
@@ -57,6 +59,7 @@ void recursion(TaskInstance task, pair<short, short> queenNewPosition, vector<pa
                     }
                 };
             }
+//            cout << "treeLevel: " << treeLevel << endl;
             return;
         }
     }
@@ -71,8 +74,8 @@ void recursion(TaskInstance task, pair<short, short> queenNewPosition, vector<pa
     task.board[queenNewPosition.first][queenNewPosition.second] = QUEEN;
 
     for (auto &newPosition : task.getPossibleMoves(k)) {
-        #pragma omp task
-        recursion(task, newPosition, moves);
+        #pragma omp task if (treeLevel < THRESHOLD)
+        recursion(task, newPosition, moves, treeLevel + 1);
     }
 }
 
