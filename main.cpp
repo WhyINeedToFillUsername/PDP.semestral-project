@@ -5,7 +5,8 @@ using namespace std;
 
 const short THRESHOLD = 5;
 
-void recursion(TaskInstance task, pair<short, short> queenNewPosition, vector<pair<short, short>> moves, int treeLevel);
+void recursionParallel(TaskInstance task, pair<short, short> queenNewPosition, vector<pair<short, short>> moves, int treeLevel);
+void recursionSequential(TaskInstance task, pair<short, short> queenNewPosition, vector<pair<short, short>> moves);
 
 void printMoves(vector<pair<short, short>> &moves);
 
@@ -31,7 +32,7 @@ int main(int argc, char **argv) {
 
     # pragma omp parallel
     # pragma omp single
-    recursion(task, task.queenPosition, vector<pair<short, short>>(), 1);
+    recursionParallel(task, task.queenPosition, vector<pair<short, short>>(), 1);
 
     // -1 for the first queen position
     cout << endl << "bestSolution: " << (bestSolution - 1) << endl;
@@ -41,7 +42,7 @@ int main(int argc, char **argv) {
     return 0;
 }
 
-void recursion(TaskInstance task, pair<short, short> queenNewPosition, vector<pair<short, short>> moves, int treeLevel) {
+void recursionParallel(TaskInstance task, pair<short, short> queenNewPosition, vector<pair<short, short>> moves, int treeLevel) {
     task.movesCount++;
     moves.push_back(queenNewPosition); // record the queen movement
 
@@ -74,8 +75,44 @@ void recursion(TaskInstance task, pair<short, short> queenNewPosition, vector<pa
     task.board[queenNewPosition.first][queenNewPosition.second] = QUEEN;
 
     for (auto &newPosition : task.getPossibleMoves(k)) {
-        #pragma omp task if (treeLevel < THRESHOLD)
-        recursion(task, newPosition, moves, treeLevel + 1);
+        // limit parallelism with THRESHOLD using "treeLevel", see slides 30 - 32 from 3rd lecture
+        if (treeLevel < THRESHOLD) {
+            #pragma omp task
+            recursionParallel(task, newPosition, moves, treeLevel + 1);
+        } else {
+            recursionSequential(task, newPosition, moves);
+        }
+    }
+}
+
+void recursionSequential(TaskInstance task, pair<short, short> queenNewPosition, vector<pair<short, short>> moves) {
+    task.movesCount++;
+    moves.push_back(queenNewPosition); // record the queen movement
+
+    if (task.board[queenNewPosition.first][queenNewPosition.second] == BLACK_PEON) {
+        task.blacksCount--;
+
+        if (task.blacksCount <= 0) {
+            // We've eliminated all the black peons. Is this the best solution?
+            if (task.movesCount < bestSolution) {
+                bestSolution = task.movesCount;
+                madeMoves = moves;
+            }
+            return;
+        }
+    }
+
+    // this can't be better than our best solution, don't continue
+    if (task.movesCount + task.blacksCount >= bestSolution) return;
+
+    // update the queen's position ont the board
+    task.board[task.queenPosition.first][task.queenPosition.second] = EMPTY_SQUARE;
+    task.queenPosition.first = queenNewPosition.first;
+    task.queenPosition.second = queenNewPosition.second;
+    task.board[queenNewPosition.first][queenNewPosition.second] = QUEEN;
+
+    for (auto &newPosition : task.getPossibleMoves(k)) {
+        recursionSequential(task, newPosition, moves);
     }
 }
 
