@@ -74,15 +74,17 @@ void recursionParallel(TaskInstance task, pair<short, short> queenNewPosition, v
     task.queenPosition.second = queenNewPosition.second;
     task.board[queenNewPosition.first][queenNewPosition.second] = QUEEN;
 
-    for (auto &newPosition : task.getPossibleMoves(k)) {
-        // limit parallelism with THRESHOLD using "treeLevel", see slides 30 - 32 from 3rd lecture
+    // limit parallelism with THRESHOLD using "treeLevel", see slides 30 - 32 from 3rd lecture
+    const vector<pair<short, short>> &possibleMoves = task.getPossibleMoves(k);
+    for (int i = 0; i < possibleMoves.size() - 1; i++) {
         if (treeLevel < THRESHOLD) {
             #pragma omp task
-            recursionParallel(task, newPosition, moves, treeLevel + 1);
+            recursionParallel(task, possibleMoves[i], moves, treeLevel + 1);
         } else {
-            recursionSequential(task, newPosition, moves);
+            recursionSequential(task, possibleMoves[i], moves);
         }
     }
+    recursionParallel(task, possibleMoves[possibleMoves.size() - 1], moves, treeLevel + 1);
 }
 
 void recursionSequential(TaskInstance task, pair<short, short> queenNewPosition, vector<pair<short, short>> moves) {
