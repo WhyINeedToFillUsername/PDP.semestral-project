@@ -34,7 +34,7 @@ public:
     char board[ARR_INIT_SIZE][ARR_INIT_SIZE];
 
     void readFromFile(const string &filename, short &k, short &h);
-    vector<pair<short, short>> getPossibleMoves(short const &k);
+    void getPossibleMoves(short const &k, vector<pair<short, short>> &possibleMoves);
 
     void printTaskInfo(short &k, short &h);
     void printBoard(short &k);

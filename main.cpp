@@ -26,7 +26,8 @@ int main(int argc, char **argv) {
 
     bestSolution = h; // set upper bound (h from file input)
 
-    vector<pair<short, short>> possibleMoves = task.getPossibleMoves(k);
+    vector<pair<short, short>> possibleMoves = vector<pair<short, short>>();
+    task.getPossibleMoves(k, possibleMoves);
     printMoves(possibleMoves);
     cout << endl;
 
@@ -74,9 +75,11 @@ void recursionParallel(TaskInstance task, short x, short y, vector<pair<short, s
     task.queenPosition.second = y;
     task.board[x][y] = QUEEN;
 
-    // limit parallelism with THRESHOLD using "treeLevel", see slides 30 - 32 from 3rd lecture
-    const vector<pair<short, short>> &possibleMoves = task.getPossibleMoves(k);
+    vector<pair<short, short>> possibleMoves = vector<pair<short, short>>();
+    task.getPossibleMoves(k, possibleMoves);
+
     for (int i = 0; i < possibleMoves.size() - 1; i++) {
+        // limit parallelism with THRESHOLD using "treeLevel", see slides 30 - 32 from 3rd lecture
         if (treeLevel < THRESHOLD) {
             short newX = possibleMoves[i].first;
             short newY = possibleMoves[i].second;
@@ -120,7 +123,10 @@ void recursionSequential(TaskInstance task, pair<short, short> queenNewPosition,
     task.queenPosition.second = queenNewPosition.second;
     task.board[queenNewPosition.first][queenNewPosition.second] = QUEEN;
 
-    for (auto &newPosition : task.getPossibleMoves(k)) {
+    vector<pair<short, short>> possibleMoves = vector<pair<short, short>>();
+    task.getPossibleMoves(k, possibleMoves);
+
+    for (auto &newPosition : possibleMoves) {
         recursionSequential(task, newPosition, moves);
     }
 }

@@ -69,8 +69,7 @@ void TaskInstance::readFromFile(const string &filename, short &k, short &h) {
  *
  * @return vector with positions of possible moves of the queen.
  */
-vector<pair<short, short>> TaskInstance::getPossibleMoves(short const &k) {
-    vector<pair<short, short>> possibleMoves = vector<pair<short, short>>();
+void TaskInstance::getPossibleMoves(short const &k, vector<pair<short, short>> &possibleMoves){
 
     // go left
     for (short x = queenPosition.first - 1; x >= 0; x--) {
@@ -144,8 +143,6 @@ vector<pair<short, short>> TaskInstance::getPossibleMoves(short const &k) {
             y--;
         }
     }
-
-    return possibleMoves;
 }
 
 bool TaskInstance::shouldMoveFurther(short const &x, short const &y, vector<pair<short, short> > &possibleMoves) {
