@@ -104,6 +104,7 @@ void recursionSequential(TaskInstance task, pair<short, short> queenNewPosition,
                         madeMoves = moves;
                     }
                 };
+            }
             return;
         }
     }
