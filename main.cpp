@@ -5,7 +5,7 @@ using namespace std;
 
 const short THRESHOLD = 5;
 
-void recursionParallel(TaskInstance task, pair<short, short> queenNewPosition, vector<pair<short, short>> moves, int treeLevel);
+void recursionParallel(TaskInstance task, short x, short y, vector<pair<short, short>> moves, int treeLevel);
 void recursionSequential(TaskInstance task, pair<short, short> queenNewPosition, vector<pair<short, short>> moves);
 
 void printMoves(vector<pair<short, short>> &moves);
@@ -32,7 +32,7 @@ int main(int argc, char **argv) {
 
     # pragma omp parallel
     # pragma omp single
-    recursionParallel(task, task.queenPosition, vector<pair<short, short>>(), 1);
+    recursionParallel(task, task.queenPosition.first, task.queenPosition.second, vector<pair<short, short>>(), 1);
 
     // -1 for the first queen position
     cout << endl << "bestSolution: " << (bestSolution - 1) << endl;
@@ -42,11 +42,11 @@ int main(int argc, char **argv) {
     return 0;
 }
 
-void recursionParallel(TaskInstance task, pair<short, short> queenNewPosition, vector<pair<short, short>> moves, int treeLevel) {
+void recursionParallel(TaskInstance task, short x, short y, vector<pair<short, short>> moves, int treeLevel) {
     task.movesCount++;
-    moves.push_back(queenNewPosition); // record the queen movement
+    moves.emplace_back(x, y); // record the queen movement
 
-    if (task.board[queenNewPosition.first][queenNewPosition.second] == BLACK_PEON) {
+    if (task.board[x][y] == BLACK_PEON) {
         task.blacksCount--;
 
         if (task.blacksCount <= 0) {
@@ -70,21 +70,23 @@ void recursionParallel(TaskInstance task, pair<short, short> queenNewPosition, v
 
     // update the queen's position ont the board
     task.board[task.queenPosition.first][task.queenPosition.second] = EMPTY_SQUARE;
-    task.queenPosition.first = queenNewPosition.first;
-    task.queenPosition.second = queenNewPosition.second;
-    task.board[queenNewPosition.first][queenNewPosition.second] = QUEEN;
+    task.queenPosition.first = x;
+    task.queenPosition.second = y;
+    task.board[x][y] = QUEEN;
 
     // limit parallelism with THRESHOLD using "treeLevel", see slides 30 - 32 from 3rd lecture
     const vector<pair<short, short>> &possibleMoves = task.getPossibleMoves(k);
     for (int i = 0; i < possibleMoves.size() - 1; i++) {
         if (treeLevel < THRESHOLD) {
-            #pragma omp task
-            recursionParallel(task, possibleMoves[i], moves, treeLevel + 1);
+            short newX = possibleMoves[i].first;
+            short newY = possibleMoves[i].second;
+            #pragma omp task shared(newX, newY)
+            recursionParallel(task, newX, newY, moves, treeLevel + 1);
         } else {
             recursionSequential(task, possibleMoves[i], moves);
         }
     }
-    recursionParallel(task, possibleMoves[possibleMoves.size() - 1], moves, treeLevel + 1);
+    recursionParallel(task, possibleMoves[possibleMoves.size() - 1].first, possibleMoves[possibleMoves.size() - 1].second, moves, treeLevel + 1);
 }
 
 void recursionSequential(TaskInstance task, pair<short, short> queenNewPosition, vector<pair<short, short>> moves) {

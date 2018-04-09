@@ -148,7 +148,7 @@ vector<pair<short, short>> TaskInstance::getPossibleMoves(short const &k) {
     return possibleMoves;
 }
 
-bool TaskInstance::shouldMoveFurther(short const &x, short const &y, vector<pair<short, short>> &possibleMoves) {
+bool TaskInstance::shouldMoveFurther(short const &x, short const &y, vector<pair<short, short> > &possibleMoves) {
     const char itemAtNewPosition = board[x][y];
 
     if (itemAtNewPosition == EMPTY_SQUARE) {
