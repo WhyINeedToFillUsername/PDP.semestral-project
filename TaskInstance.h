@@ -32,6 +32,7 @@ public:
 
     pair<int, int> queenPosition;
     char board[ARR_INIT_SIZE][ARR_INIT_SIZE];
+    vector<pair<int, int>> madeMoves;
 
     void readFromFile(const string &filename, int &k, int &h);
     void getPossibleMoves(int const &k, vector<pair<int, int>> &possibleMoves);

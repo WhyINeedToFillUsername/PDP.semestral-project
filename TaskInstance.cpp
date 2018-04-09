@@ -17,6 +17,8 @@ TaskInstance::TaskInstance(const TaskInstance &old) {
 
     queenPosition.first = old.queenPosition.first;
     queenPosition.second = old.queenPosition.second;
+    madeMoves = old.madeMoves;
+
     memcpy(board, old.board, sizeof (char) * ARR_INIT_SIZE * ARR_INIT_SIZE);
 }
 
