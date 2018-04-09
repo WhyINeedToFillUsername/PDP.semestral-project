@@ -1,4 +1,5 @@
 #include <iostream>
+#include <omp.h>
 #include "TaskInstance.h"
 
 using namespace std;
@@ -26,6 +27,9 @@ int main(int argc, char **argv) {
 
     bestSolution = h; // set upper bound (h from file input)
 
+    // measure execution time
+    double startTime = omp_get_wtime();
+
     vector<pair<int, int>> possibleMoves = vector<pair<int, int>>();
     task.getPossibleMoves(k, possibleMoves);
     printMoves(possibleMoves);
@@ -35,8 +39,11 @@ int main(int argc, char **argv) {
     # pragma omp single
     recursionParallel(task, task.queenPosition.first, task.queenPosition.second, vector<pair<int, int>>(), 1);
 
+    const double finalTime = omp_get_wtime() - startTime;
+    cout << "total time: " << finalTime << endl;
+
     // -1 for the first queen position
-    cout << endl << "bestSolution: " << (bestSolution - 1) << endl;
+    cout << "bestSolution: " << (bestSolution - 1) << endl;
 
     printMoves(madeMoves);
 
