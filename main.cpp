@@ -3,17 +3,17 @@
 
 using namespace std;
 
-const short THRESHOLD = 5;
+const int THRESHOLD = 5;
 
-void recursionParallel(TaskInstance task, short x, short y, vector<pair<short, short>> moves, int treeLevel);
-void recursionSequential(TaskInstance task, pair<short, short> queenNewPosition, vector<pair<short, short>> moves);
+void recursionParallel(TaskInstance task, int x, int y, vector<pair<int, int>> moves, int treeLevel);
+void recursionSequential(TaskInstance task, pair<int, int> queenNewPosition, vector<pair<int, int>> moves);
 
-void printMoves(vector<pair<short, short>> &moves);
+void printMoves(vector<pair<int, int>> &moves);
 
-short k; // chessboard size
-short h; // recommended value of the upper bound (akt_min)
-short bestSolution;
-vector<pair<short, short>> madeMoves;
+int k; // chessboard size
+int h; // recommended value of the upper bound (akt_min)
+int bestSolution;
+vector<pair<int, int>> madeMoves;
 
 // compile with "g++ -O3 -fopenmp main.cpp TaskInstance.cpp TaskInstance.h -o cv1.exe"
 int main(int argc, char **argv) {
@@ -26,14 +26,14 @@ int main(int argc, char **argv) {
 
     bestSolution = h; // set upper bound (h from file input)
 
-    vector<pair<short, short>> possibleMoves = vector<pair<short, short>>();
+    vector<pair<int, int>> possibleMoves = vector<pair<int, int>>();
     task.getPossibleMoves(k, possibleMoves);
     printMoves(possibleMoves);
     cout << endl;
 
     # pragma omp parallel
     # pragma omp single
-    recursionParallel(task, task.queenPosition.first, task.queenPosition.second, vector<pair<short, short>>(), 1);
+    recursionParallel(task, task.queenPosition.first, task.queenPosition.second, vector<pair<int, int>>(), 1);
 
     // -1 for the first queen position
     cout << endl << "bestSolution: " << (bestSolution - 1) << endl;
@@ -43,7 +43,7 @@ int main(int argc, char **argv) {
     return 0;
 }
 
-void recursionParallel(TaskInstance task, short x, short y, vector<pair<short, short>> moves, int treeLevel) {
+void recursionParallel(TaskInstance task, int x, int y, vector<pair<int, int>> moves, int treeLevel) {
     task.movesCount++;
     moves.emplace_back(x, y); // record the queen movement
 
@@ -75,14 +75,14 @@ void recursionParallel(TaskInstance task, short x, short y, vector<pair<short, s
     task.queenPosition.second = y;
     task.board[x][y] = QUEEN;
 
-    vector<pair<short, short>> possibleMoves = vector<pair<short, short>>();
+    vector<pair<int, int>> possibleMoves = vector<pair<int, int>>();
     task.getPossibleMoves(k, possibleMoves);
 
     for (int i = 0; i < possibleMoves.size() - 1; i++) {
         // limit parallelism with THRESHOLD using "treeLevel", see slides 30 - 32 from 3rd lecture
         if (treeLevel < THRESHOLD) {
-            short newX = possibleMoves[i].first;
-            short newY = possibleMoves[i].second;
+            int newX = possibleMoves[i].first;
+            int newY = possibleMoves[i].second;
             #pragma omp task shared(newX, newY)
             recursionParallel(task, newX, newY, moves, treeLevel + 1);
         } else {
@@ -92,7 +92,7 @@ void recursionParallel(TaskInstance task, short x, short y, vector<pair<short, s
     recursionParallel(task, possibleMoves[possibleMoves.size() - 1].first, possibleMoves[possibleMoves.size() - 1].second, moves, treeLevel + 1);
 }
 
-void recursionSequential(TaskInstance task, pair<short, short> queenNewPosition, vector<pair<short, short>> moves) {
+void recursionSequential(TaskInstance task, pair<int, int> queenNewPosition, vector<pair<int, int>> moves) {
     task.movesCount++;
     moves.push_back(queenNewPosition); // record the queen movement
 
@@ -123,7 +123,7 @@ void recursionSequential(TaskInstance task, pair<short, short> queenNewPosition,
     task.queenPosition.second = queenNewPosition.second;
     task.board[queenNewPosition.first][queenNewPosition.second] = QUEEN;
 
-    vector<pair<short, short>> possibleMoves = vector<pair<short, short>>();
+    vector<pair<int, int>> possibleMoves = vector<pair<int, int>>();
     task.getPossibleMoves(k, possibleMoves);
 
     for (auto &newPosition : possibleMoves) {
@@ -131,7 +131,7 @@ void recursionSequential(TaskInstance task, pair<short, short> queenNewPosition,
     }
 }
 
-void printMoves(vector<pair<short, short>> &moves) {
+void printMoves(vector<pair<int, int>> &moves) {
     cout << "queen moves: ";
     for (auto &move : moves) {
         cout << "(" << move.first << "," << move.second << "); ";

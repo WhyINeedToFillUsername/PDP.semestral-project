@@ -20,7 +20,7 @@ TaskInstance::TaskInstance(const TaskInstance &old) {
     memcpy(board, old.board, sizeof (char) * ARR_INIT_SIZE * ARR_INIT_SIZE);
 }
 
-void TaskInstance::printTaskInfo(short &k, short &h) {
+void TaskInstance::printTaskInfo(int &k, int &h) {
     std::cout << "k: " << k << ", h: " << h << std::endl;
     std::cout << "queen position: " << queenPosition.first << ", " << queenPosition.second << std::endl;
     std::cout << "# of black peons: " << blacksCount << std::endl;
@@ -28,26 +28,26 @@ void TaskInstance::printTaskInfo(short &k, short &h) {
     printBoard(k);
 }
 
-void TaskInstance::printBoard(short &k) {
+void TaskInstance::printBoard(int &k) {
     cout << "board:" << endl;
-    for (short i = 0; i < k; i++) {
-        for (short j = 0; j < k; j++) {
+    for (int i = 0; i < k; i++) {
+        for (int j = 0; j < k; j++) {
             cout << board[j][i];
         }
         cout << endl;
     }
 }
 
-void TaskInstance::readFromFile(const string &filename, short &k, short &h) {
+void TaskInstance::readFromFile(const string &filename, int &k, int &h) {
     std::ifstream input(filename);
 
     input >> k >> h;
     std::string line;
     getline(input, line);
 
-    for (short i = 0; i < k; i++) {
+    for (int i = 0; i < k; i++) {
         getline(input, line);
-        for (short j = 0; j < k; j++) {
+        for (int j = 0; j < k; j++) {
             char figure = line.at(j);
             if (figure == QUEEN) {
                 this->queenPosition.first = i;
@@ -69,32 +69,32 @@ void TaskInstance::readFromFile(const string &filename, short &k, short &h) {
  *
  * @return vector with positions of possible moves of the queen.
  */
-void TaskInstance::getPossibleMoves(short const &k, vector<pair<short, short>> &possibleMoves){
+void TaskInstance::getPossibleMoves(int const &k, vector<pair<int, int>> &possibleMoves){
 
     // go left
-    for (short x = queenPosition.first - 1; x >= 0; x--) {
+    for (int x = queenPosition.first - 1; x >= 0; x--) {
         if (!shouldMoveFurther(x, queenPosition.second, possibleMoves)) break;
     }
 
     // go right
-    for (short x = queenPosition.first + 1; x < k; x++) {
+    for (int x = queenPosition.first + 1; x < k; x++) {
         if (!shouldMoveFurther(x, queenPosition.second, possibleMoves)) break;
     }
 
     // go up
-    for (short y = queenPosition.second - 1; y >= 0; y--) {
+    for (int y = queenPosition.second - 1; y >= 0; y--) {
         if (!shouldMoveFurther(queenPosition.first, y, possibleMoves)) break;
     }
 
     // go down
-    for (short y = queenPosition.second + 1; y < k; y++) {
+    for (int y = queenPosition.second + 1; y < k; y++) {
         if (!shouldMoveFurther(queenPosition.first, y, possibleMoves)) break;
     }
 
     // go up the top-left diagonal
     {
-        short x = queenPosition.first - 1;
-        short y = queenPosition.second - 1;
+        int x = queenPosition.first - 1;
+        int y = queenPosition.second - 1;
 
         while (x >= 0 && y >= 0) {
             if (!shouldMoveFurther(x, y, possibleMoves)) break;
@@ -107,8 +107,8 @@ void TaskInstance::getPossibleMoves(short const &k, vector<pair<short, short>> &
 
     // go down the top-left diagonal
     {
-        short x = queenPosition.first + 1;
-        short y = queenPosition.second + 1;
+        int x = queenPosition.first + 1;
+        int y = queenPosition.second + 1;
 
         while (x < k && y < k) {
             if (!shouldMoveFurther(x, y, possibleMoves)) break;
@@ -120,8 +120,8 @@ void TaskInstance::getPossibleMoves(short const &k, vector<pair<short, short>> &
 
     // go down the top-right diagonal
     {
-        short x = queenPosition.first - 1;
-        short y = queenPosition.second + 1;
+        int x = queenPosition.first - 1;
+        int y = queenPosition.second + 1;
 
         while (x >= 0 && y < k) {
             if (!shouldMoveFurther(x, y, possibleMoves)) break;
@@ -133,8 +133,8 @@ void TaskInstance::getPossibleMoves(short const &k, vector<pair<short, short>> &
 
     // go up the top-right diagonal
     {
-        short x = queenPosition.first + 1;
-        short y = queenPosition.second - 1;
+        int x = queenPosition.first + 1;
+        int y = queenPosition.second - 1;
 
         while (x < k && y >= 0) {
             if (!shouldMoveFurther(x, y, possibleMoves)) break;
@@ -145,7 +145,7 @@ void TaskInstance::getPossibleMoves(short const &k, vector<pair<short, short>> &
     }
 }
 
-bool TaskInstance::shouldMoveFurther(short const &x, short const &y, vector<pair<short, short> > &possibleMoves) {
+bool TaskInstance::shouldMoveFurther(int const &x, int const &y, vector<pair<int, int> > &possibleMoves) {
     const char itemAtNewPosition = board[x][y];
 
     if (itemAtNewPosition == EMPTY_SQUARE) {
