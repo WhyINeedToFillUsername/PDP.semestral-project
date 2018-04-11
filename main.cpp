@@ -7,7 +7,7 @@ using namespace std;
 const int THRESHOLD = 4;
 
 void generateStatesRecursively(TaskInstance task, int x, int y, int treeLevel);
-void recursionSequential(TaskInstance task, pair<int, int> queenNewPosition);
+void solveStatesRecursively(TaskInstance task, pair<int, int> queenNewPosition);
 
 void printMoves(vector<pair<int, int>> &moves);
 
@@ -41,7 +41,7 @@ int main(int argc, char **argv) {
         statesToDo[i].getPossibleMoves(k, possibleMoves);
 
         for (int j = 0; j < possibleMoves.size(); j++) {
-            recursionSequential(statesToDo[i], possibleMoves[j]);
+            solveStatesRecursively(statesToDo[i], possibleMoves[j]);
         }
     }
 
@@ -88,7 +88,7 @@ void generateStatesRecursively(TaskInstance task, int x, int y, int treeLevel) {
     }
 }
 
-void recursionSequential(TaskInstance task, pair<int, int> queenNewPosition) {
+void solveStatesRecursively(TaskInstance task, pair<int, int> queenNewPosition) {
     task.movesCount++;
     task.madeMoves.push_back(queenNewPosition); // record the queen movement
 
@@ -123,7 +123,7 @@ void recursionSequential(TaskInstance task, pair<int, int> queenNewPosition) {
     task.getPossibleMoves(k, possibleMoves);
 
     for (auto &newPosition : possibleMoves) {
-        recursionSequential(task, newPosition);
+        solveStatesRecursively(task, newPosition);
     }
 }
 
