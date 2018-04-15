@@ -1,0 +1,15 @@
+kralovna02.txt
+k: 5, h: 10
+queen position: 2, 2
+# of black peons: 4
+# of moves: 0
+board:
+10001
+02020
+00300
+02020
+10001
+
+total time: 0
+bestSolution: 5
+queen moves: (2,2); (0,2); (0,4); (4,4); (4,0); (0,0); 

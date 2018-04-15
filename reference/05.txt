@@ -1,0 +1,17 @@
+kralovna05.txt
+k: 7, h: 15
+queen position: 6, 5
+# of black peons: 1
+# of moves: 0
+board:
+0000000
+0000000
+0222220
+0020000
+2020222
+1020003
+0020000
+
+total time: 0.963
+bestSolution: 8
+queen moves: (6,5); (3,5); (3,3); (6,3); (6,1); (0,1); (0,3); (1,4); (0,5); 

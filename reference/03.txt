@@ -1,0 +1,17 @@
+kralovna03.txt
+k: 7, h: 10
+queen position: 3, 3
+# of black peons: 4
+# of moves: 0
+board:
+1000001
+0000000
+0020200
+0003000
+0020200
+0000000
+1000001
+
+total time: 0
+bestSolution: 5
+queen moves: (3,3); (3,0); (6,0); (6,6); (0,6); (0,0); 
