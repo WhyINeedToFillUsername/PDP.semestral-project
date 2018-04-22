@@ -4,7 +4,6 @@
 #include "TaskInstance.h"
 
 TaskInstance::TaskInstance() {
-    movesCount = 0;
     blacksCount = 0;
 }
 
@@ -12,11 +11,10 @@ TaskInstance::TaskInstance() {
 TaskInstance::TaskInstance(const TaskInstance &old) {
 //    cout << "copy constructor called" << endl;
 
-    movesCount = old.movesCount;
     blacksCount = old.blacksCount;
 
-    queenPosition.first = old.queenPosition.first;
-    queenPosition.second = old.queenPosition.second;
+    queenPosition[0] = old.queenPosition[0];
+    queenPosition[1] = old.queenPosition[1];
     madeMoves = old.madeMoves;
 
     memcpy(board, old.board, sizeof (char) * ARR_INIT_SIZE * ARR_INIT_SIZE);
@@ -24,9 +22,9 @@ TaskInstance::TaskInstance(const TaskInstance &old) {
 
 void TaskInstance::printTaskInfo(int &k, int &h) {
     std::cout << "k: " << k << ", h: " << h << std::endl;
-    std::cout << "queen position: " << queenPosition.first << ", " << queenPosition.second << std::endl;
+    std::cout << "queen position: " << queenPosition[0] << ", " << queenPosition[1] << std::endl;
     std::cout << "# of black peons: " << blacksCount << std::endl;
-    std::cout << "# of moves: " << movesCount << std::endl;
+    std::cout << "# of moves: " << madeMoves.size() << std::endl;
     printBoard(k);
 }
 
@@ -52,8 +50,8 @@ void TaskInstance::readFromFile(const string &filename, int &k, int &h) {
         for (int j = 0; j < k; j++) {
             char figure = line.at(j);
             if (figure == QUEEN) {
-                this->queenPosition.first = i;
-                this->queenPosition.second = j;
+                this->queenPosition[0] = i;
+                this->queenPosition[1] = j;
             } else if (figure == BLACK_PEON) {
                 this->blacksCount++;
             }
@@ -74,29 +72,29 @@ void TaskInstance::readFromFile(const string &filename, int &k, int &h) {
 void TaskInstance::getPossibleMoves(int const &k, vector<pair<int, int>> &possibleMoves){
 
     // go left
-    for (int x = queenPosition.first - 1; x >= 0; x--) {
-        if (!shouldMoveFurther(x, queenPosition.second, possibleMoves)) break;
+    for (int x = queenPosition[0] - 1; x >= 0; x--) {
+        if (!shouldMoveFurther(x, queenPosition[1], possibleMoves)) break;
     }
 
     // go right
-    for (int x = queenPosition.first + 1; x < k; x++) {
-        if (!shouldMoveFurther(x, queenPosition.second, possibleMoves)) break;
+    for (int x = queenPosition[0] + 1; x < k; x++) {
+        if (!shouldMoveFurther(x, queenPosition[1], possibleMoves)) break;
     }
 
     // go up
-    for (int y = queenPosition.second - 1; y >= 0; y--) {
-        if (!shouldMoveFurther(queenPosition.first, y, possibleMoves)) break;
+    for (int y = queenPosition[1] - 1; y >= 0; y--) {
+        if (!shouldMoveFurther(queenPosition[0], y, possibleMoves)) break;
     }
 
     // go down
-    for (int y = queenPosition.second + 1; y < k; y++) {
-        if (!shouldMoveFurther(queenPosition.first, y, possibleMoves)) break;
+    for (int y = queenPosition[1] + 1; y < k; y++) {
+        if (!shouldMoveFurther(queenPosition[0], y, possibleMoves)) break;
     }
 
     // go up the top-left diagonal
     {
-        int x = queenPosition.first - 1;
-        int y = queenPosition.second - 1;
+        int x = queenPosition[0] - 1;
+        int y = queenPosition[1] - 1;
 
         while (x >= 0 && y >= 0) {
             if (!shouldMoveFurther(x, y, possibleMoves)) break;
@@ -109,8 +107,8 @@ void TaskInstance::getPossibleMoves(int const &k, vector<pair<int, int>> &possib
 
     // go down the top-left diagonal
     {
-        int x = queenPosition.first + 1;
-        int y = queenPosition.second + 1;
+        int x = queenPosition[0] + 1;
+        int y = queenPosition[1] + 1;
 
         while (x < k && y < k) {
             if (!shouldMoveFurther(x, y, possibleMoves)) break;
@@ -122,8 +120,8 @@ void TaskInstance::getPossibleMoves(int const &k, vector<pair<int, int>> &possib
 
     // go down the top-right diagonal
     {
-        int x = queenPosition.first - 1;
-        int y = queenPosition.second + 1;
+        int x = queenPosition[0] - 1;
+        int y = queenPosition[1] + 1;
 
         while (x >= 0 && y < k) {
             if (!shouldMoveFurther(x, y, possibleMoves)) break;
@@ -135,8 +133,8 @@ void TaskInstance::getPossibleMoves(int const &k, vector<pair<int, int>> &possib
 
     // go up the top-right diagonal
     {
-        int x = queenPosition.first + 1;
-        int y = queenPosition.second - 1;
+        int x = queenPosition[0] + 1;
+        int y = queenPosition[1] - 1;
 
         while (x < k && y >= 0) {
             if (!shouldMoveFurther(x, y, possibleMoves)) break;

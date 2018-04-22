@@ -27,10 +27,9 @@ public:
     TaskInstance();
     TaskInstance(const TaskInstance &old);
 
-    int movesCount; // number of moves made by queen
     int blacksCount; // sum of present black peons
 
-    pair<int, int> queenPosition;
+    int queenPosition[2];
     char board[ARR_INIT_SIZE][ARR_INIT_SIZE];
     vector<pair<int, int>> madeMoves;
 
