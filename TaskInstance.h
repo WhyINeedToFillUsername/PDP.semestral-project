@@ -26,6 +26,7 @@ class TaskInstance {
 public:
     TaskInstance();
     TaskInstance(const TaskInstance &old);
+    TaskInstance(int &movesCount, int &blacksCount, const int *queenPosition, char *board, int moves[][2]);
 
     int movesCount; // number of moves made by queen
     int blacksCount; // sum of present black peons

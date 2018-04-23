@@ -22,6 +22,24 @@ TaskInstance::TaskInstance(const TaskInstance &old) {
     memcpy(board, old.board, sizeof (char) * ARR_INIT_SIZE * ARR_INIT_SIZE);
 }
 
+// constructor from existing data
+TaskInstance::TaskInstance(int &movesCount, int &blacksCount, const int *queenPosition, char *board, int moves[][2]) {
+//    cout << "copy constructor called" << endl;
+
+    this->movesCount = movesCount;
+    this->blacksCount = blacksCount;
+
+    this->queenPosition[0] = queenPosition[0];
+    this->queenPosition[1] = queenPosition[1];
+
+    // arr to vector of pairs
+    for (int i = 0; i < movesCount; i++) {
+        this->madeMoves.emplace_back(moves[i][0], moves[i][1]);
+    }
+
+    memcpy(this->board, board, sizeof (char) * ARR_INIT_SIZE * ARR_INIT_SIZE);
+}
+
 void TaskInstance::printTaskInfo(int &k, int &h) {
     std::cout << "k: " << k << ", h: " << h << std::endl;
     std::cout << "queen position: " << queenPosition[0] << ", " << queenPosition[1] << std::endl;
