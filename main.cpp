@@ -9,12 +9,11 @@ using namespace std;
 
 // MPI tags
 #define BEST_SOL_TAG 1
-#define K_TAG 2
-#define H_TAG 3
 #define END_TAG 4
 #define RESULT_TAG 5
 #define DATA_TAG 6
 #define COUNT_TAG 7
+#define GIMME_WORK_TAG 8
 #define LENGTH 500
 
 void generateStatesRecursively(TaskInstance task, int x, int y, int treeLevel);
@@ -44,7 +43,7 @@ int main(int argc, char **argv) {
     int p; // number of processes
     MPI_Comm_size(MPI_COMM_WORLD, &p);
 
-    short end = false;
+    int end = false;
     char buffer[LENGTH];
     int position = 0;
 
@@ -69,11 +68,9 @@ int main(int argc, char **argv) {
 //        cout << "____________# of states: " << statesToDo.size() << endl;
 
         // send init info
-        for (int i = 1; i < p; i++) {
-            MPI_Send(&bestSolution, 1, MPI_INT, i, BEST_SOL_TAG, MPI_COMM_WORLD);
-            MPI_Send(&k, 1, MPI_INT, i, K_TAG, MPI_COMM_WORLD);
-            MPI_Send(&h, 1, MPI_INT, i, H_TAG, MPI_COMM_WORLD);
-        }
+        MPI_Bcast(&bestSolution, 1, MPI_INT, 0, MPI_COMM_WORLD);
+        MPI_Bcast(&k, 1, MPI_INT, 0, MPI_COMM_WORLD);
+        MPI_Bcast(&h, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
         //    # pragma omp parallel for
         for (int i = 0; i < statesToDo.size(); i++) {
@@ -87,13 +84,12 @@ int main(int argc, char **argv) {
         }
 
 
-        int sentStates = 0;
-//        while (!QUEUE.Empty()) {
-//        while (sentStates < statesToDo!QUEUE.Empty()) {
-            // send
-        // TODO states send to slaves
-        int expectStates = 10;
-        for (int i = 1; i < p; i++) {
+//        while (!statesToDo.empty()) {
+//            int pid;
+//            MPI_Recv(&pid, 0, MPI_INT, MPI_ANY_SOURCE, GIMME_WORK_TAG, MPI_COMM_WORLD, &status);
+
+        for (int i = 1; i < p; i++){
+            int expectStates = min(10, static_cast<const int &>(statesToDo.size())); // 10 or remaining
             MPI_Send(&expectStates, 1, MPI_INT, i, COUNT_TAG, MPI_COMM_WORLD);
             cout << "sending 10 states to " << i << endl;
             for (int j = 0; j < expectStates; j++) {
@@ -101,7 +97,6 @@ int main(int argc, char **argv) {
                 statesToDo.pop();
             }
         }
-//        }
 
         // posli Slavum ukonceni
         cout << endl << "FINISH ALL" << endl;
@@ -136,9 +131,9 @@ int main(int argc, char **argv) {
         ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
         ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-        MPI_Recv(&bestSolution, 1, MPI_INT, 0, BEST_SOL_TAG, MPI_COMM_WORLD, &status);
-        MPI_Recv(&k, 1, MPI_INT, 0, K_TAG, MPI_COMM_WORLD, &status);
-        MPI_Recv(&h, 1, MPI_INT, 0, H_TAG, MPI_COMM_WORLD, &status);
+        MPI_Bcast(&bestSolution, 1, MPI_INT, 0, MPI_COMM_WORLD);
+        MPI_Bcast(&k, 1, MPI_INT, 0, MPI_COMM_WORLD);
+        MPI_Bcast(&h, 1, MPI_INT, 0, MPI_COMM_WORLD);
 //        cout << ">> slave " << my_rank << " received: ";
 //        cout << "bestSolution " << bestSolution << ", k: " << k << ", h: " << h << endl;
 
@@ -147,20 +142,22 @@ int main(int argc, char **argv) {
         // while not received end_tag, work
         while (!end) {
             int expectStates;
-            MPI_Recv(&expectStates, 1, MPI_INT, 0, COUNT_TAG, MPI_COMM_WORLD, &status);
+            MPI_Recv(&expectStates, 1, MPI_INT, 0, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
 
-            cout << ">> slave " << my_rank << " is expecting " << expectStates << " states." << endl;
+            if (status.MPI_TAG == END_TAG) { // end this
+                end = expectStates;
+            } else if (status.MPI_TAG == COUNT_TAG) { // receive work
+                cout << ">> slave " << my_rank << " is expecting " << expectStates << " states" << endl;
 
-            vector<TaskInstance *> statesToDoInSlave = vector<TaskInstance *>();
-            for (int i = 0; i < expectStates; i++) {// for expectStates receive data
-                statesToDoInSlave.push_back(receiveState(buffer));
+                vector<TaskInstance *> statesToDoInSlave = vector<TaskInstance *>();
+                for (int i = 0; i < expectStates; i++) {// for expectStates receive data
+                    statesToDoInSlave.push_back(receiveState(buffer));
+                }
+                cout << ">> slave " << my_rank << " received " << statesToDoInSlave.size() << " states." << endl;
             }
-            cout << ">> slave " << my_rank << " received " << statesToDoInSlave.size() << " states." << endl;
-
             //TODO solve
-            // wait for end, if not, then repeat and ask for more
-
-            MPI_Recv(&end, 1, MPI_SHORT, 0, END_TAG, MPI_COMM_WORLD, &status);
+            // request work
+//                MPI_Send(buffer, 0, MPI_INT, 0, GIMME_WORK_TAG, MPI_COMM_WORLD);
         }
 
         // send my best solution
