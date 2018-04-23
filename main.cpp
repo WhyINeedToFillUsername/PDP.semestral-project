@@ -1,5 +1,6 @@
 #include "mpi.h"
 #include <iostream>
+#include <queue>
 #include "TaskInstance.h"
 
 using namespace std;
@@ -29,7 +30,7 @@ int k; // chessboard size
 int h; // recommended value of the upper bound (akt_min)
 int bestSolution;
 vector<pair<int, int>> bestSolutionMoves;
-vector<TaskInstance> statesToDo;
+queue<TaskInstance> statesToDo;
 
 // compile with "g++ -O3 -fopenmp main.cpp TaskInstance.cpp TaskInstance.h -o cv1.exe"
 int main(int argc, char **argv) {
@@ -63,7 +64,7 @@ int main(int argc, char **argv) {
         double startTime = MPI_Wtime();
 
         // create states
-        statesToDo = vector<TaskInstance>();
+        statesToDo = queue<TaskInstance>();
         generateStatesRecursively(initTask, initTask.queenPosition[0], initTask.queenPosition[1], 1);
 //        cout << "____________# of states: " << statesToDo.size() << endl;
 
@@ -74,30 +75,33 @@ int main(int argc, char **argv) {
             MPI_Send(&h, 1, MPI_INT, i, H_TAG, MPI_COMM_WORLD);
         }
 
-//        while (!QUEUE.Empty()) {
-//            // send
-//        }
-
         //    # pragma omp parallel for
-//        for (int i = 0; i < statesToDo.size(); i++) {
-//            vector<pair<int, int>> possibleMoves = vector<pair<int, int>>();
-//            statesToDo[i].getPossibleMoves(k, possibleMoves);
-//
-//            for (int j = 0; j < possibleMoves.size(); j++) {
-//                solveStatesRecursively(statesToDo[i], possibleMoves[j]);
-//            }
-//        }
+        for (int i = 0; i < statesToDo.size(); i++) {
+            vector<pair<int, int>> possibleMoves = vector<pair<int, int>>();
+            statesToDo.front().getPossibleMoves(k, possibleMoves);
 
+            for (int j = 0; j < possibleMoves.size(); j++) {
+                solveStatesRecursively(statesToDo.front(), possibleMoves[j]);
+            }
+            statesToDo.pop();
+        }
+
+
+        int sentStates = 0;
+//        while (!QUEUE.Empty()) {
+//        while (sentStates < statesToDo!QUEUE.Empty()) {
+            // send
         // TODO states send to slaves
         int expectStates = 10;
         for (int i = 1; i < p; i++) {
             MPI_Send(&expectStates, 1, MPI_INT, i, COUNT_TAG, MPI_COMM_WORLD);
             cout << "sending 10 states to " << i << endl;
             for (int j = 0; j < expectStates; j++) {
-                sendState(statesToDo[j], buffer, i);
+                sendState(statesToDo.front(), buffer, i);
+                statesToDo.pop();
             }
         }
-
+//        }
 
         // posli Slavum ukonceni
         cout << endl << "FINISH ALL" << endl;
@@ -237,7 +241,7 @@ void generateStatesRecursively(TaskInstance task, int x, int y, int treeLevel) {
             generateStatesRecursively(task, newX, newY, treeLevel + 1);
         }
     } else {
-        statesToDo.push_back(task);
+        statesToDo.push(task);
         return;
     }
 }
