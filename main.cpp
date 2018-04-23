@@ -13,8 +13,7 @@ using namespace std;
 #define END_TAG 4
 #define RESULT_TAG 5
 #define DATA_TAG 6
-#define DATA_MOVES_TAG 7
-#define COUNT_TAG_TAG 8
+#define COUNT_TAG 7
 #define LENGTH 500
 
 void generateStatesRecursively(TaskInstance task, int x, int y, int treeLevel);
@@ -22,7 +21,7 @@ void solveStatesRecursively(TaskInstance task, pair<int, int> queenNewPosition);
 
 void printMoves(vector<pair<int, int>> &moves);
 
-void sendState(const TaskInstance &state, char *buffer, int &p);
+void sendState(const TaskInstance &state, char *buffer, int &slave);
 TaskInstance *receiveState(char * buffer);
 
 
@@ -66,9 +65,7 @@ int main(int argc, char **argv) {
         // create states
         statesToDo = vector<TaskInstance>();
         generateStatesRecursively(initTask, initTask.queenPosition[0], initTask.queenPosition[1], 1);
-        cout << "____________# of states: " << statesToDo.size() << endl;
-
-        // TODO states send to slaves
+//        cout << "____________# of states: " << statesToDo.size() << endl;
 
         // send init info
         for (int i = 1; i < p; i++) {
@@ -82,24 +79,24 @@ int main(int argc, char **argv) {
 //        }
 
         //    # pragma omp parallel for
-        for (int i = 0; i < statesToDo.size(); i++) {
-            vector<pair<int, int>> possibleMoves = vector<pair<int, int>>();
-            statesToDo[i].getPossibleMoves(k, possibleMoves);
+//        for (int i = 0; i < statesToDo.size(); i++) {
+//            vector<pair<int, int>> possibleMoves = vector<pair<int, int>>();
+//            statesToDo[i].getPossibleMoves(k, possibleMoves);
+//
+//            for (int j = 0; j < possibleMoves.size(); j++) {
+//                solveStatesRecursively(statesToDo[i], possibleMoves[j]);
+//            }
+//        }
 
-            for (int j = 0; j < possibleMoves.size(); j++) {
-                solveStatesRecursively(statesToDo[i], possibleMoves[j]);
+        // TODO states send to slaves
+        int expectStates = 10;
+        for (int i = 1; i < p; i++) {
+            MPI_Send(&expectStates, 1, MPI_INT, i, COUNT_TAG, MPI_COMM_WORLD);
+            cout << "sending 10 states to " << i << endl;
+            for (int j = 0; j < expectStates; j++) {
+                sendState(statesToDo[j], buffer, i);
             }
         }
-
-        /* send:
-        int blacksCount; // sum of present black peons
-        int queenPosition[2];
-        char board[ARR_INIT_SIZE][ARR_INIT_SIZE];
-        vector<pair<int, int>> madeMoves;*/
-
-        sendState(statesToDo[0], buffer, p);
-
-
 
 
         // posli Slavum ukonceni
@@ -128,7 +125,11 @@ int main(int argc, char **argv) {
         printMoves(bestSolutionMoves);
 
         ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
     } else { // slave
+        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
         ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
         MPI_Recv(&bestSolution, 1, MPI_INT, 0, BEST_SOL_TAG, MPI_COMM_WORLD, &status);
@@ -139,23 +140,22 @@ int main(int argc, char **argv) {
 
         int myBest = bestSolution;
 
-
-
-//        int expectStates;
-//        MPI_Recv(&expectStates, 1, MPI_INT, 0, COUNT_TAG, MPI_COMM_WORLD, &status);
-
-        // receive data
-        // for expectStates
-        TaskInstance *task = receiveState(buffer);
-
-        cout << ">> " << my_rank << "got instance:" << endl;
-        task->printTaskInfo(k, h);
-        task->printBoard(k);
-
-
-
         // while not received end_tag, work
         while (!end) {
+            int expectStates;
+            MPI_Recv(&expectStates, 1, MPI_INT, 0, COUNT_TAG, MPI_COMM_WORLD, &status);
+
+            cout << ">> slave " << my_rank << " is expecting " << expectStates << " states." << endl;
+
+            vector<TaskInstance *> statesToDoInSlave = vector<TaskInstance *>();
+            for (int i = 0; i < expectStates; i++) {// for expectStates receive data
+                statesToDoInSlave.push_back(receiveState(buffer));
+            }
+            cout << ">> slave " << my_rank << " received " << statesToDoInSlave.size() << " states." << endl;
+
+            //TODO solve
+            // wait for end, if not, then repeat and ask for more
+
             MPI_Recv(&end, 1, MPI_SHORT, 0, END_TAG, MPI_COMM_WORLD, &status);
         }
 
@@ -190,7 +190,7 @@ TaskInstance *receiveState(char *buffer) {
     return new TaskInstance(movesCount, blacksCount, queenPosition, *board, moves);
 }
 
-void sendState(const TaskInstance &state, char *buffer, int &p) {
+void sendState(const TaskInstance &state, char *buffer, int &slave) {
     printf("sending data to slaves: %d %d %d\n", state.blacksCount, state.queenPosition[0], state.queenPosition[1]);
 
     int position = 0;
@@ -207,9 +207,7 @@ void sendState(const TaskInstance &state, char *buffer, int &p) {
     MPI_Pack(&state.movesCount, 1, MPI_INT, buffer, LENGTH, &position, MPI_COMM_WORLD);
     MPI_Pack(&moves, state.movesCount * 2, MPI_INT, buffer, LENGTH, &position, MPI_COMM_WORLD);
 
-    for (int i = 1; i < p; i++) {
-        MPI_Send(buffer, position, MPI_PACKED, i, DATA_TAG, MPI_COMM_WORLD);
-    }
+    MPI_Send(buffer, position, MPI_PACKED, slave, DATA_TAG, MPI_COMM_WORLD);
 }
 
 void generateStatesRecursively(TaskInstance task, int x, int y, int treeLevel) {
