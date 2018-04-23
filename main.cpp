@@ -6,6 +6,7 @@
 using namespace std;
 
 #define THRESHOLD 4
+#define LOCAL_AMOUNT 50
 
 // MPI tags
 #define BEST_SOL_TAG 1
@@ -17,7 +18,7 @@ using namespace std;
 #define LENGTH 500
 
 void generateStatesRecursively(TaskInstance task, int x, int y, int treeLevel);
-void solveStatesRecursively(TaskInstance task, pair<int, int> queenNewPosition);
+void solveStatesRecursively(TaskInstance *oldTask);
 
 void printMoves(vector<pair<int, int>> &moves);
 
@@ -27,7 +28,8 @@ TaskInstance *receiveState(char * buffer);
 
 int k; // chessboard size
 int h; // recommended value of the upper bound (akt_min)
-int bestSolution;
+int localBestSolution;
+int globalBestSolution;
 vector<pair<int, int>> bestSolutionMoves;
 queue<TaskInstance> statesToDo;
 
@@ -57,7 +59,8 @@ int main(int argc, char **argv) {
         initTask.readFromFile("./input/" + filename, k, h);
         initTask.printTaskInfo(k, h);
 
-        bestSolution = h + 1; // set upper bound (h from file input); +1 for the initial position
+        localBestSolution = h + 1; // set upper bound (h from file input); +1 for the initial position
+        globalBestSolution = localBestSolution;
 
         // measure execution time
         double startTime = MPI_Wtime();
@@ -68,7 +71,7 @@ int main(int argc, char **argv) {
 //        cout << "____________# of states: " << statesToDo.size() << endl;
 
         // send init info
-        MPI_Bcast(&bestSolution, 1, MPI_INT, 0, MPI_COMM_WORLD);
+        MPI_Bcast(&localBestSolution, 1, MPI_INT, 0, MPI_COMM_WORLD);
         MPI_Bcast(&k, 1, MPI_INT, 0, MPI_COMM_WORLD);
         MPI_Bcast(&h, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
@@ -84,12 +87,13 @@ int main(int argc, char **argv) {
 //        }
 
         while (!statesToDo.empty()) {
-            MPI_Recv(&bestSolution, 1, MPI_INT, MPI_ANY_SOURCE, GIMME_WORK_TAG, MPI_COMM_WORLD, &status);
+            MPI_Recv(&localBestSolution, 1, MPI_INT, MPI_ANY_SOURCE, GIMME_WORK_TAG, MPI_COMM_WORLD, &status);
+            if (localBestSolution < globalBestSolution) globalBestSolution = localBestSolution;
             int receiver = status.MPI_SOURCE;
 
-            int expectStates = min(10, static_cast<const int &>(statesToDo.size())); // 10 or remaining
+            int expectStates = min(LOCAL_AMOUNT, static_cast<const int &>(statesToDo.size())); // 10 or remaining
             MPI_Send(&expectStates, 1, MPI_INT, receiver, COUNT_TAG, MPI_COMM_WORLD);
-            cout << "sending " << expectStates << " states to " << receiver << endl;
+//            cout << "sending " << expectStates << " states to " << receiver << endl;
             for (int j = 0; j < expectStates; j++) {
                 sendState(statesToDo.front(), buffer, receiver);
                 statesToDo.pop();
@@ -100,7 +104,7 @@ int main(int argc, char **argv) {
         cout << endl << "FINISH ALL" << endl;
         end = true;
         for (int i = 1; i < p; i++) {
-            MPI_Send(&end, 1, MPI_SHORT, i, END_TAG, MPI_COMM_WORLD);
+            MPI_Send(&end, 1, MPI_INT, i, END_TAG, MPI_COMM_WORLD);
         }
 
         // prijmi od Slavu vysledek
@@ -117,7 +121,7 @@ int main(int argc, char **argv) {
         cout << endl << "total time: " << finalTime << endl;
 
         // -1 for the first queen position
-        cout << "bestSolution: " << (bestSolution - 1) << endl;
+        cout << "bestSolution: " << (globalBestSolution - 1) << endl;
 
         printMoves(bestSolutionMoves);
 
@@ -129,14 +133,14 @@ int main(int argc, char **argv) {
         ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
         ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-        MPI_Bcast(&bestSolution, 1, MPI_INT, 0, MPI_COMM_WORLD);
+        MPI_Bcast(&localBestSolution, 1, MPI_INT, 0, MPI_COMM_WORLD);
         MPI_Bcast(&k, 1, MPI_INT, 0, MPI_COMM_WORLD);
         MPI_Bcast(&h, 1, MPI_INT, 0, MPI_COMM_WORLD);
 //        cout << ">> slave " << my_rank << " received: ";
 //        cout << "bestSolution " << bestSolution << ", k: " << k << ", h: " << h << endl;
 
         // request first batch of work
-        MPI_Send(&bestSolution, 1, MPI_INT, 0, GIMME_WORK_TAG, MPI_COMM_WORLD);
+        MPI_Send(&localBestSolution, 1, MPI_INT, 0, GIMME_WORK_TAG, MPI_COMM_WORLD);
 
         // while not received end_tag, work
         while (!end) {
@@ -152,16 +156,19 @@ int main(int argc, char **argv) {
                 for (int i = 0; i < expectStates; i++) {// for expectStates receive data
                     statesToDoInSlave.push_back(receiveState(buffer));
                 }
-                cout << ">> slave " << my_rank << " received " << statesToDoInSlave.size() << " states." << endl;
-            }
-            //TODO solve
+                cout << ">> slave " << my_rank << " received " << statesToDoInSlave.size() << " states; solving..." << endl;
 
+                for (int i = 0; i < expectStates; i++) {// for expectStates receive data
+                    TaskInstance *task = statesToDoInSlave[i];
+                    solveStatesRecursively(task);
+                }
+            }
             // request work
-            MPI_Send(&bestSolution, 1, MPI_INT, 0, GIMME_WORK_TAG, MPI_COMM_WORLD);
+            MPI_Send(&localBestSolution, 1, MPI_INT, 0, GIMME_WORK_TAG, MPI_COMM_WORLD);
         }
 
         // send my best solution
-        MPI_Send(&bestSolution, 1, MPI_INT, 0, RESULT_TAG, MPI_COMM_WORLD);
+        MPI_Send(&localBestSolution, 1, MPI_INT, 0, RESULT_TAG, MPI_COMM_WORLD);
 
         cout << ">> slave " << my_rank << " received end_tag, closing." << endl << endl;
     }
@@ -220,7 +227,7 @@ void generateStatesRecursively(TaskInstance task, int x, int y, int treeLevel) {
     }
 
     // this can't be better than our best solution, don't continue
-    if (task.movesCount + task.blacksCount >= bestSolution) return;
+    if (task.movesCount + task.blacksCount >= localBestSolution) return;
 
     // update the queen's position ont the board
     task.board[task.queenPosition[0]][task.queenPosition[1]] = EMPTY_SQUARE;
@@ -243,42 +250,43 @@ void generateStatesRecursively(TaskInstance task, int x, int y, int treeLevel) {
     }
 }
 
-void solveStatesRecursively(TaskInstance task, pair<int, int> queenNewPosition) {
-    task.movesCount++;
-    task.madeMoves.push_back(queenNewPosition); // record the queen movement
-
-    if (task.board[queenNewPosition.first][queenNewPosition.second] == BLACK_PEON) {
-        task.blacksCount--;
-
-        if (task.blacksCount <= 0) {
-            // We've eliminated all the black peons. Is this the best solution?
-            if (task.movesCount < bestSolution) {
-                #pragma omp critical
-                {
-                    if (task.movesCount < bestSolution) {
-                        bestSolution = task.movesCount;
-                        bestSolutionMoves = task.madeMoves;
-                    }
-                };
-            }
-            return;
-        }
-    }
-
-    // this can't be better than our best solution, don't continue
-    if (task.movesCount + task.blacksCount >= bestSolution) return;
-
-    // update the queen's position ont the board
-    task.board[task.queenPosition[0]][task.queenPosition[1]] = EMPTY_SQUARE;
-    task.queenPosition[0] = queenNewPosition.first;
-    task.queenPosition[1] = queenNewPosition.second;
-    task.board[queenNewPosition.first][queenNewPosition.second] = QUEEN;
-
+void solveStatesRecursively(TaskInstance *oldTask) {
     vector<pair<int, int>> possibleMoves = vector<pair<int, int>>();
-    task.getPossibleMoves(k, possibleMoves);
+    oldTask->getPossibleMoves(k, possibleMoves);
 
     for (auto &newPosition : possibleMoves) {
-        solveStatesRecursively(task, newPosition);
+        TaskInstance task = *oldTask;
+        task.movesCount++;
+        task.madeMoves.push_back(newPosition); // record the queen movement
+
+        if (task.board[newPosition.first][newPosition.second] == BLACK_PEON) {
+            task.blacksCount--;
+
+            if (task.blacksCount <= 0) {
+                // We've eliminated all the black peons. Is this the best solution?
+//                if (task.movesCount < localBestSolution) {
+//                    #pragma omp critical
+//                    {
+                        if (task.movesCount < localBestSolution) {
+                            localBestSolution = task.movesCount;
+                            bestSolutionMoves = task.madeMoves;
+                        }
+//                    };
+//                }
+                    break;
+            }
+        }
+
+        // this can't be better than our best solution, don't continue
+        if (task.movesCount + task.blacksCount >= localBestSolution) break;
+
+        // update the queen's position ont the board
+        task.board[task.queenPosition[0]][task.queenPosition[1]] = EMPTY_SQUARE;
+        task.queenPosition[0] = newPosition.first;
+        task.queenPosition[1] = newPosition.second;
+        task.board[newPosition.first][newPosition.second] = QUEEN;
+
+        solveStatesRecursively(&task);
     }
 }
 
