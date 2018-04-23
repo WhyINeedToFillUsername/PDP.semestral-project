@@ -13,7 +13,8 @@ using namespace std;
 #define END_TAG 4
 #define RESULT_TAG 5
 #define DATA_TAG 6
-#define LENGTH 100
+#define DATA_MOVES_TAG 6
+#define LENGTH 500
 
 void generateStatesRecursively(TaskInstance task, int x, int y, int treeLevel);
 void solveStatesRecursively(TaskInstance task, pair<int, int> queenNewPosition);
@@ -60,6 +61,7 @@ int main(int argc, char **argv) {
         // create states
         statesToDo = vector<TaskInstance>();
         generateStatesRecursively(initTask, initTask.queenPosition[0], initTask.queenPosition[1], 1);
+        cout << "____________# of states: " << statesToDo.size() << endl;
 
         // TODO states send to slaves
 
@@ -96,10 +98,35 @@ int main(int argc, char **argv) {
 //        MPI_Send(&data.front(), data.size(), MPI_FLOAT, 0, 1, MPI_COMM_WORLD);
 //        &chars[0], chars.size()
 
-//        MPI_Pack(&statesToDo[0].blacksCount, 1, MPI_INT, buffer, LENGTH, &position, MPI_COMM_WORLD);
-//        MPI_Pack(&statesToDo[0].queenPosition, 2, MPI_INT, buffer, LENGTH, &position, MPI_COMM_WORLD);
-//        dest = 0;
-//        MPI_Send(buffer, position, MPI_PACKED, dest, DATA_TAG, MPI_COMM_WORLD);
+        printf("sending data to slaves: %d %d %d\n", statesToDo[0].blacksCount, statesToDo[0].queenPosition[0],
+               statesToDo[0].queenPosition[1]);
+
+        MPI_Pack(&statesToDo[0].blacksCount, 1, MPI_INT, buffer, LENGTH, &position, MPI_COMM_WORLD);
+        MPI_Pack(&statesToDo[0].queenPosition, 2, MPI_INT, buffer, LENGTH, &position, MPI_COMM_WORLD);
+        MPI_Pack(&statesToDo[0].board, ARR_INIT_SIZE * ARR_INIT_SIZE, MPI_CHAR, buffer, LENGTH, &position, MPI_COMM_WORLD);
+
+        for (int i = 1; i < p; i++) {
+            MPI_Send(buffer, position, MPI_PACKED, i, DATA_TAG, MPI_COMM_WORLD);
+        }
+
+        position = 0;
+
+        // pack moves
+        int moves[statesToDo[0].movesCount][2];
+        for (int i = 0; i < statesToDo[0].movesCount; i++) {
+            moves[i][0] = statesToDo[0].madeMoves[i].first;
+            moves[i][1] = statesToDo[0].madeMoves[i].second;
+        }
+        MPI_Pack(&statesToDo[0].movesCount, 1, MPI_INT, buffer, LENGTH, &position, MPI_COMM_WORLD);
+        MPI_Pack(&moves, statesToDo[0].movesCount * 2, MPI_INT, buffer, LENGTH, &position, MPI_COMM_WORLD);
+
+        for (int i = 1; i < p; i++) {
+            MPI_Send(buffer, position, MPI_PACKED, i, DATA_MOVES_TAG, MPI_COMM_WORLD);
+        }
+
+
+
+
 
         // posli Slavum ukonceni
         cout << endl << "FINISH ALL" << endl;
@@ -138,8 +165,46 @@ int main(int argc, char **argv) {
 
         int myBest = bestSolution;
 
-//        MPI_Recv(buffer, LENGTH, MPI_PACKED, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
-//        MPI_Unpack(buffer, LENGTH, &position, &a, 1, MPI_FLOAT, MPI_COMM_WORLD);
+
+
+
+        // receive data
+        position = 0;
+        int blacksCount;
+        int queenPosition[2];
+        char board[ARR_INIT_SIZE][ARR_INIT_SIZE];
+
+        MPI_Recv(buffer, LENGTH, MPI_PACKED, 0, DATA_TAG, MPI_COMM_WORLD, &status);
+        MPI_Unpack(buffer, LENGTH, &position, &blacksCount, 1, MPI_INT, MPI_COMM_WORLD);
+        MPI_Unpack(buffer, LENGTH, &position, &queenPosition, 2, MPI_INT, MPI_COMM_WORLD);
+        MPI_Unpack(buffer, LENGTH, &position, &board, ARR_INIT_SIZE * ARR_INIT_SIZE, MPI_CHAR, MPI_COMM_WORLD);
+
+        printf(">> %d: I have got message %d %d %d\n", my_rank, blacksCount, queenPosition[0], queenPosition[1]);
+        cout << ">> " << my_rank << " board:" << endl;
+        for (int i = 0; i < k; i++) {
+            for (int j = 0; j < k; j++) {
+                cout << board[j][i];
+            }
+            cout << endl;
+        }
+        cout << endl;
+
+
+        position = 0;
+        MPI_Recv(buffer, LENGTH, MPI_PACKED, 0, DATA_MOVES_TAG, MPI_COMM_WORLD, &status);
+
+        int movesCount;
+        MPI_Unpack(buffer, LENGTH, &position, &movesCount, 1, MPI_INT, MPI_COMM_WORLD);
+        int moves[movesCount][2];
+        MPI_Unpack(buffer, LENGTH, &position, &moves, movesCount * 2, MPI_INT, MPI_COMM_WORLD);
+
+        cout << ">> moves:" << endl;
+        for (int i = 0; i < movesCount; i++) {
+            cout << "(" << moves[i][0] << ", " << moves[i][1] << ") ";
+        }
+        cout << endl;
+
+
 
         // while not received end_tag, work
         while (!end) {
@@ -159,15 +224,15 @@ int main(int argc, char **argv) {
 }
 
 void generateStatesRecursively(TaskInstance task, int x, int y, int treeLevel) {
+    task.movesCount++;
     task.madeMoves.emplace_back(x, y); // record the queen movement
-    int movesCount = static_cast<int>(task.madeMoves.size());
 
     if (task.board[x][y] == BLACK_PEON) {
         task.blacksCount--;
     }
 
     // this can't be better than our best solution, don't continue
-    if (movesCount + task.blacksCount >= bestSolution) return;
+    if (task.movesCount + task.blacksCount >= bestSolution) return;
 
     // update the queen's position ont the board
     task.board[task.queenPosition[0]][task.queenPosition[1]] = EMPTY_SQUARE;
@@ -191,19 +256,19 @@ void generateStatesRecursively(TaskInstance task, int x, int y, int treeLevel) {
 }
 
 void solveStatesRecursively(TaskInstance task, pair<int, int> queenNewPosition) {
+    task.movesCount++;
     task.madeMoves.push_back(queenNewPosition); // record the queen movement
-    int movesCount = static_cast<int>(task.madeMoves.size());
 
     if (task.board[queenNewPosition.first][queenNewPosition.second] == BLACK_PEON) {
         task.blacksCount--;
 
         if (task.blacksCount <= 0) {
             // We've eliminated all the black peons. Is this the best solution?
-            if (movesCount < bestSolution) {
-//                #pragma omp critical
+            if (task.movesCount < bestSolution) {
+                #pragma omp critical
                 {
-                    if (movesCount < bestSolution) {
-                        bestSolution = movesCount;
+                    if (task.movesCount < bestSolution) {
+                        bestSolution = task.movesCount;
                         bestSolutionMoves = task.madeMoves;
                     }
                 };
@@ -213,7 +278,7 @@ void solveStatesRecursively(TaskInstance task, pair<int, int> queenNewPosition) 
     }
 
     // this can't be better than our best solution, don't continue
-    if (movesCount + task.blacksCount >= bestSolution) return;
+    if (task.movesCount + task.blacksCount >= bestSolution) return;
 
     // update the queen's position ont the board
     task.board[task.queenPosition[0]][task.queenPosition[1]] = EMPTY_SQUARE;

@@ -4,6 +4,7 @@
 #include "TaskInstance.h"
 
 TaskInstance::TaskInstance() {
+    movesCount = 0;
     blacksCount = 0;
 }
 
@@ -11,6 +12,7 @@ TaskInstance::TaskInstance() {
 TaskInstance::TaskInstance(const TaskInstance &old) {
 //    cout << "copy constructor called" << endl;
 
+    movesCount = old.movesCount;
     blacksCount = old.blacksCount;
 
     queenPosition[0] = old.queenPosition[0];
@@ -24,7 +26,7 @@ void TaskInstance::printTaskInfo(int &k, int &h) {
     std::cout << "k: " << k << ", h: " << h << std::endl;
     std::cout << "queen position: " << queenPosition[0] << ", " << queenPosition[1] << std::endl;
     std::cout << "# of black peons: " << blacksCount << std::endl;
-    std::cout << "# of moves: " << madeMoves.size() << std::endl;
+    std::cout << "# of moves: " << movesCount << std::endl;
     printBoard(k);
 }
 

@@ -14,7 +14,7 @@ using namespace std;
 #define CV1_BOARD_H
 
 
-static const int ARR_INIT_SIZE = 10;
+#define ARR_INIT_SIZE 10
 
 static const char EMPTY_SQUARE = '0';
 static const char BLACK_PEON = '1';
@@ -27,6 +27,7 @@ public:
     TaskInstance();
     TaskInstance(const TaskInstance &old);
 
+    int movesCount; // number of moves made by queen
     int blacksCount; // sum of present black peons
 
     int queenPosition[2];
