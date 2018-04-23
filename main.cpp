@@ -50,6 +50,7 @@ int main(int argc, char **argv) {
     int position = 0;
 
     MPI_Status status;
+    double startTime;
 
     if (my_rank == 0) { // master
         const string filename = argv[1];
@@ -63,7 +64,7 @@ int main(int argc, char **argv) {
         globalBestSolution = localBestSolution;
 
         // measure execution time
-        double startTime = MPI_Wtime();
+        startTime = MPI_Wtime();
 
         // create states
         statesToDo = queue<TaskInstance>();
@@ -75,20 +76,9 @@ int main(int argc, char **argv) {
         MPI_Bcast(&k, 1, MPI_INT, 0, MPI_COMM_WORLD);
         MPI_Bcast(&h, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-        //    # pragma omp parallel for
-//        for (int i = 0; i < statesToDo.size(); i++) {
-//            vector<pair<int, int>> possibleMoves = vector<pair<int, int>>();
-//            statesToDo.front().getPossibleMoves(k, possibleMoves);
-//
-//            for (int j = 0; j < possibleMoves.size(); j++) {
-//                solveStatesRecursively(statesToDo.front(), possibleMoves[j]);
-//            }
-//            statesToDo.pop();
-//        }
-
         while (!statesToDo.empty()) {
             MPI_Recv(&localBestSolution, 1, MPI_INT, MPI_ANY_SOURCE, GIMME_WORK_TAG, MPI_COMM_WORLD, &status);
-            if (localBestSolution < globalBestSolution) globalBestSolution = localBestSolution;
+//            if (localBestSolution < globalBestSolution) globalBestSolution = localBestSolution;
             int receiver = status.MPI_SOURCE;
 
             int expectStates = min(LOCAL_AMOUNT, static_cast<const int &>(statesToDo.size())); // 10 or remaining
@@ -107,29 +97,9 @@ int main(int argc, char **argv) {
             MPI_Send(&end, 1, MPI_INT, i, END_TAG, MPI_COMM_WORLD);
         }
 
-        // prijmi od Slavu vysledek
-        cout << "slave results: ";
-        int slaveResults[p - 1];
-        for (int i = 1; i < p; i++) {
-            MPI_Recv(&slaveResults[i - 1], 1, MPI_INT, i, RESULT_TAG, MPI_COMM_WORLD, &status);
-            cout << i << ": " << slaveResults[i - 1] << "; ";
-        }
-        cout << endl;
-
-//        MPI_Send(message, strlen(message) + 1, MPI_CHAR, dest, tag, MPI_COMM_WORLD);
-        const double finalTime = MPI_Wtime() - startTime;
-        cout << endl << "total time: " << finalTime << endl;
-
-        // -1 for the first queen position
-        cout << "bestSolution: " << (globalBestSolution - 1) << endl;
-
-        printMoves(bestSolutionMoves);
-
-        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
         ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
         ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
     } else { // slave
-        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
         ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
         ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -145,7 +115,7 @@ int main(int argc, char **argv) {
         // while not received end_tag, work
         while (!end) {
             int expectStates;
-            MPI_Recv(&expectStates, 1, MPI_INT, 0, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+            MPI_Recv(&expectStates, 1, MPI_INT, 0, MPI_ANY_TAG, MPI_COMM_WORLD, &status); //TODO receive best solution so far
 
             if (status.MPI_TAG == END_TAG) { // end this
                 end = expectStates;
@@ -156,7 +126,7 @@ int main(int argc, char **argv) {
                 for (int i = 0; i < expectStates; i++) {// for expectStates receive data
                     statesToDoInSlave.push_back(receiveState(buffer));
                 }
-                cout << ">> slave " << my_rank << " received " << statesToDoInSlave.size() << " states; solving..." << endl;
+//                cout << ">> slave " << my_rank << " received " << statesToDoInSlave.size() << " states; solving..." << endl;
 
                 for (int i = 0; i < expectStates; i++) {// for expectStates receive data
                     TaskInstance *task = statesToDoInSlave[i];
@@ -166,11 +136,22 @@ int main(int argc, char **argv) {
             // request work
             MPI_Send(&localBestSolution, 1, MPI_INT, 0, GIMME_WORK_TAG, MPI_COMM_WORLD);
         }
+        cout << ">> slave " << my_rank << " received end_tag, closing with best " << localBestSolution << endl << endl;
+    }
 
-        // send my best solution
-        MPI_Send(&localBestSolution, 1, MPI_INT, 0, RESULT_TAG, MPI_COMM_WORLD);
+    int local[2];
+    if (my_rank == 0) local[0] = globalBestSolution; else local[0] = localBestSolution;
+    local[1] = my_rank;
+    int best[2];
+    MPI_Allreduce(&local, &best, 1, MPI_2INT, MPI_MINLOC, MPI_COMM_WORLD); //implicit barrier
 
-        cout << ">> slave " << my_rank << " received end_tag, closing." << endl << endl;
+    if (my_rank == 0) {
+        const double finalTime = MPI_Wtime() - startTime;
+        cout << endl << "total time: " << finalTime << endl;
+
+    } else if (my_rank == best[1]) { // this process has the best solution, print it
+        cout << "bestSolution: " << (localBestSolution - 1) << endl; // -1 for the first queen position
+        printMoves(bestSolutionMoves);
     }
 
     /* shut down MPI */
