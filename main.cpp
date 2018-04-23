@@ -73,27 +73,25 @@ int main(int argc, char **argv) {
         MPI_Bcast(&h, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
         //    # pragma omp parallel for
-        for (int i = 0; i < statesToDo.size(); i++) {
-            vector<pair<int, int>> possibleMoves = vector<pair<int, int>>();
-            statesToDo.front().getPossibleMoves(k, possibleMoves);
+//        for (int i = 0; i < statesToDo.size(); i++) {
+//            vector<pair<int, int>> possibleMoves = vector<pair<int, int>>();
+//            statesToDo.front().getPossibleMoves(k, possibleMoves);
+//
+//            for (int j = 0; j < possibleMoves.size(); j++) {
+//                solveStatesRecursively(statesToDo.front(), possibleMoves[j]);
+//            }
+//            statesToDo.pop();
+//        }
 
-            for (int j = 0; j < possibleMoves.size(); j++) {
-                solveStatesRecursively(statesToDo.front(), possibleMoves[j]);
-            }
-            statesToDo.pop();
-        }
+        while (!statesToDo.empty()) {
+            MPI_Recv(&bestSolution, 1, MPI_INT, MPI_ANY_SOURCE, GIMME_WORK_TAG, MPI_COMM_WORLD, &status);
+            int receiver = status.MPI_SOURCE;
 
-
-//        while (!statesToDo.empty()) {
-//            int pid;
-//            MPI_Recv(&pid, 0, MPI_INT, MPI_ANY_SOURCE, GIMME_WORK_TAG, MPI_COMM_WORLD, &status);
-
-        for (int i = 1; i < p; i++){
             int expectStates = min(10, static_cast<const int &>(statesToDo.size())); // 10 or remaining
-            MPI_Send(&expectStates, 1, MPI_INT, i, COUNT_TAG, MPI_COMM_WORLD);
-            cout << "sending 10 states to " << i << endl;
+            MPI_Send(&expectStates, 1, MPI_INT, receiver, COUNT_TAG, MPI_COMM_WORLD);
+            cout << "sending " << expectStates << " states to " << receiver << endl;
             for (int j = 0; j < expectStates; j++) {
-                sendState(statesToDo.front(), buffer, i);
+                sendState(statesToDo.front(), buffer, receiver);
                 statesToDo.pop();
             }
         }
@@ -137,7 +135,8 @@ int main(int argc, char **argv) {
 //        cout << ">> slave " << my_rank << " received: ";
 //        cout << "bestSolution " << bestSolution << ", k: " << k << ", h: " << h << endl;
 
-        int myBest = bestSolution;
+        // request first batch of work
+        MPI_Send(&bestSolution, 1, MPI_INT, 0, GIMME_WORK_TAG, MPI_COMM_WORLD);
 
         // while not received end_tag, work
         while (!end) {
@@ -147,7 +146,7 @@ int main(int argc, char **argv) {
             if (status.MPI_TAG == END_TAG) { // end this
                 end = expectStates;
             } else if (status.MPI_TAG == COUNT_TAG) { // receive work
-                cout << ">> slave " << my_rank << " is expecting " << expectStates << " states" << endl;
+//                cout << ">> slave " << my_rank << " is expecting " << expectStates << " states" << endl;
 
                 vector<TaskInstance *> statesToDoInSlave = vector<TaskInstance *>();
                 for (int i = 0; i < expectStates; i++) {// for expectStates receive data
@@ -156,14 +155,15 @@ int main(int argc, char **argv) {
                 cout << ">> slave " << my_rank << " received " << statesToDoInSlave.size() << " states." << endl;
             }
             //TODO solve
+
             // request work
-//                MPI_Send(buffer, 0, MPI_INT, 0, GIMME_WORK_TAG, MPI_COMM_WORLD);
+            MPI_Send(&bestSolution, 1, MPI_INT, 0, GIMME_WORK_TAG, MPI_COMM_WORLD);
         }
 
         // send my best solution
-        MPI_Send(&myBest, 1, MPI_INT, 0, RESULT_TAG, MPI_COMM_WORLD);
+        MPI_Send(&bestSolution, 1, MPI_INT, 0, RESULT_TAG, MPI_COMM_WORLD);
 
-        cout << ">> slave " << my_rank << " received end_tag, closing." << endl;
+        cout << ">> slave " << my_rank << " received end_tag, closing." << endl << endl;
     }
 
     /* shut down MPI */
@@ -192,7 +192,7 @@ TaskInstance *receiveState(char *buffer) {
 }
 
 void sendState(const TaskInstance &state, char *buffer, int &slave) {
-    printf("sending data to slaves: %d %d %d\n", state.blacksCount, state.queenPosition[0], state.queenPosition[1]);
+//    printf("sending data to slaves: %d %d %d\n", state.blacksCount, state.queenPosition[0], state.queenPosition[1]);
 
     int position = 0;
     MPI_Pack(&state.blacksCount, 1, MPI_INT, buffer, LENGTH, &position, MPI_COMM_WORLD);
