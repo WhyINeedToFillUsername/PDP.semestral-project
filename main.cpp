@@ -23,6 +23,8 @@ void solveStatesRecursively(TaskInstance task, pair<int, int> queenNewPosition);
 void printMoves(vector<pair<int, int>> &moves);
 
 void sendState(const TaskInstance &state, char *buffer, int &p);
+TaskInstance *receiveState(char * buffer);
+
 
 int k; // chessboard size
 int h; // recommended value of the upper bound (akt_min)
@@ -144,21 +146,7 @@ int main(int argc, char **argv) {
 
         // receive data
         // for expectStates
-        position = 0;
-        int blacksCount;
-        int queenPosition[2];
-        char board[ARR_INIT_SIZE][ARR_INIT_SIZE];
-        int movesCount;
-
-        MPI_Recv(buffer, LENGTH, MPI_PACKED, 0, DATA_TAG, MPI_COMM_WORLD, &status);
-        MPI_Unpack(buffer, LENGTH, &position, &blacksCount, 1, MPI_INT, MPI_COMM_WORLD);
-        MPI_Unpack(buffer, LENGTH, &position, &queenPosition, 2, MPI_INT, MPI_COMM_WORLD);
-        MPI_Unpack(buffer, LENGTH, &position, &board, ARR_INIT_SIZE * ARR_INIT_SIZE, MPI_CHAR, MPI_COMM_WORLD);
-        MPI_Unpack(buffer, LENGTH, &position, &movesCount, 1, MPI_INT, MPI_COMM_WORLD);
-        int moves[movesCount][2];
-        MPI_Unpack(buffer, LENGTH, &position, &moves, movesCount * 2, MPI_INT, MPI_COMM_WORLD);
-
-        TaskInstance *task = new TaskInstance(movesCount, blacksCount, queenPosition, *board, moves);
+        TaskInstance *task = receiveState(buffer);
 
         cout << ">> " << my_rank << "got instance:" << endl;
         task->printTaskInfo(k, h);
@@ -181,6 +169,25 @@ int main(int argc, char **argv) {
     MPI_Finalize();
 
     return 0;
+}
+
+TaskInstance *receiveState(char *buffer) {
+    int position = 0;
+    int blacksCount;
+    int queenPosition[2];
+    char board[ARR_INIT_SIZE][ARR_INIT_SIZE];
+    int movesCount;
+    MPI_Status status;
+
+    MPI_Recv(buffer, LENGTH, MPI_PACKED, 0, DATA_TAG, MPI_COMM_WORLD, &status);
+    MPI_Unpack(buffer, LENGTH, &position, &blacksCount, 1, MPI_INT, MPI_COMM_WORLD);
+    MPI_Unpack(buffer, LENGTH, &position, &queenPosition, 2, MPI_INT, MPI_COMM_WORLD);
+    MPI_Unpack(buffer, LENGTH, &position, &board, ARR_INIT_SIZE * ARR_INIT_SIZE, MPI_CHAR, MPI_COMM_WORLD);
+    MPI_Unpack(buffer, LENGTH, &position, &movesCount, 1, MPI_INT, MPI_COMM_WORLD);
+    int moves[movesCount][2];
+    MPI_Unpack(buffer, LENGTH, &position, &moves, movesCount * 2, MPI_INT, MPI_COMM_WORLD);
+
+    return new TaskInstance(movesCount, blacksCount, queenPosition, *board, moves);
 }
 
 void sendState(const TaskInstance &state, char *buffer, int &p) {
