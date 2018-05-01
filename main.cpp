@@ -1,6 +1,7 @@
 #include "mpi.h"
 #include <iostream>
 #include <queue>
+#include <omp.h>
 #include "TaskInstance.h"
 
 using namespace std;
@@ -64,7 +65,7 @@ int main(int argc, char **argv) {
         globalBestSolution = localBestSolution;
 
         // measure execution time
-        startTime = MPI_Wtime();
+        startTime = omp_get_wtime();
 
         // create states
         statesToDo = queue<TaskInstance>();
@@ -128,10 +129,15 @@ int main(int argc, char **argv) {
                 }
 //                cout << ">> slave " << my_rank << " received " << statesToDoInSlave.size() << " states; solving..." << endl;
 
-                for (int i = 0; i < expectStates; i++) {// for expectStates receive data
-                    TaskInstance *task = statesToDoInSlave[i];
-                    solveStatesRecursively(task);
-                }
+                # pragma omp parallel
+                {
+                    # pragma omp single
+                    for (int i = 0; i < expectStates; i++) {// for expectStates receive data
+                        TaskInstance *task = statesToDoInSlave[i];
+                        #pragma omp task
+                        solveStatesRecursively(task);
+                    }
+                };
             }
             // request work
             MPI_Send(&localBestSolution, 1, MPI_INT, 0, GIMME_WORK_TAG, MPI_COMM_WORLD);
@@ -146,7 +152,7 @@ int main(int argc, char **argv) {
     MPI_Allreduce(&local, &best, 1, MPI_2INT, MPI_MINLOC, MPI_COMM_WORLD); //implicit barrier
 
     if (my_rank == 0) {
-        const double finalTime = MPI_Wtime() - startTime;
+        const double finalTime = omp_get_wtime() - startTime;
         cout << endl << "total time: " << finalTime << endl;
 
     } else if (my_rank == best[1]) { // this process has the best solution, print it
@@ -245,16 +251,16 @@ void solveStatesRecursively(TaskInstance *oldTask) {
 
             if (task.blacksCount <= 0) {
                 // We've eliminated all the black peons. Is this the best solution?
-//                if (task.movesCount < localBestSolution) {
-//                    #pragma omp critical
-//                    {
+                if (task.movesCount < localBestSolution) {
+                    #pragma omp critical
+                    {
                         if (task.movesCount < localBestSolution) {
                             localBestSolution = task.movesCount;
                             bestSolutionMoves = task.madeMoves;
                         }
-//                    };
-//                }
-                    break;
+                    };
+                }
+                break;
             }
         }
 
