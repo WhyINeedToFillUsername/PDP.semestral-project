@@ -1,0 +1,17 @@
+kralovna07.txt
+k: 7, h: 9
+queen position: 6, 6
+# of black peons: 1
+# of moves: 0
+board:
+0002000
+0202020
+0202020
+0202020
+0202020
+0202020
+1200023
+
+total time: 0.039
+bestSolution: 7
+queen moves: (6,6); (6,0); (4,0); (4,6); (2,6); (2,0); (0,0); (0,6); 
