@@ -6,7 +6,6 @@
 #include <vector>
 #include <string>
 #include <fstream>
-#include <cstring>
 
 using namespace std;
 
@@ -14,33 +13,33 @@ using namespace std;
 #define CV1_BOARD_H
 
 
-static const int ARR_INIT_SIZE = 10;
-
-static const char EMPTY_SQUARE = '0';
-static const char BLACK_PEON = '1';
-static const char WHITE_PEON = '2';
-static const char QUEEN = '3';
-
+static const short EMPTY_SQUARE = 0;
+static const short BLACK_PEON = 1;
+static const short WHITE_PEON = 2;
+static const short QUEEN = 3;
 
 class TaskInstance {
 public:
     TaskInstance();
     TaskInstance(const TaskInstance &old);
 
-    int movesCount; // number of moves made by queen
-    int blacksCount; // sum of present black peons
+    short k; // rozměr šachovnice
+    short h; // doporučená hodnota horní meze (akt_min)
 
-    pair<int, int> queenPosition;
-    char board[ARR_INIT_SIZE][ARR_INIT_SIZE];
+    short movesCount; // number of moves made by queen
+    short blacksCount; // sum of present black peons
 
-    void readFromFile(const string &filename, int &k, int &h);
-    void getPossibleMoves(int const &k, vector<pair<int, int>> &possibleMoves);
+    pair<short, short> queenPosition;
+    vector<vector<short>> board;
 
-    void printTaskInfo(int &k, int &h);
-    void printBoard(int &k);
+    void readFromFile(const string &filename);
+    vector<pair<short, short>> getPossibleMoves();
+
+    void printTaskInfo();
+    void printBoard();
 
 private:
-    bool shouldMoveFurther(int const &x, int const &y, vector<pair<int, int>> &possibleMoves);
+    bool shouldMoveFurther(short x, short y, vector<pair<short, short>> &possibleMoves);
 };
 
 
